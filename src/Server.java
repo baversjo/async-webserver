@@ -49,7 +49,7 @@ public class Server {
                     serverSocket.accept("Client connection", this);
 
                     // handle this connection
-                    handleConnection(ch);
+                    Client client = new Client(ch);
                 }
 
                 public void failed(Throwable exc, Object att) {
@@ -75,10 +75,11 @@ public class Server {
 
 	}
 	
+	/*
 	protected void handleConnection(final AsynchronousSocketChannel ch){
-		Client client = new Client(ch);
 		
-		/*
+		
+		
 		String response = "Buy more ฿itcoins!\n";
 		
 		CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
@@ -96,6 +97,7 @@ public class Server {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		*/
+		
 	}
+	*/
 }
