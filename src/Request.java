@@ -8,4 +8,9 @@ public class Request {
 	public Request(){
 		
 	}
+	
+	//Parse headers and put in Map
+//	public parse(){
+//		
+//	}
 }
