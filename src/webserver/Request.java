@@ -9,9 +9,11 @@ public class Request {
 	public String httpVersion;
 	public String path;
 	public String httpMethod;
+	protected boolean completed;
 	
 	public Request(){
 		headers = new HashMap<String,String>();
+		completed = false;
 	}
 	
 	

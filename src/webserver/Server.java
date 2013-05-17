@@ -12,20 +12,29 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import middleware.FileMiddleware;
+import middleware.Middleware;
+
 
 public class Server {
-	public static final int BUFFER_SIZE = 10000;
+	public static final int BUFFER_SIZE = 8192; //8kb
 	
 	public static final CharsetEncoder utf8Encoder = Charset.forName("UTF-8").newEncoder();
 	public static final CharsetDecoder utf8Decoder = Charset.forName("UTF-8").newDecoder();
+	
+	public static final LinkedList<Middleware> middlewares = new LinkedList<Middleware>(); 
 	
 	private int port;
 	
 	public static void main(String args[]){
         int port = 8060;
+        
+        middlewares.add(new FileMiddleware());
+        
         new Server(port);
 	}
 	
