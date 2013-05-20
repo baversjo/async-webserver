@@ -2,6 +2,7 @@ package webserver;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,21 +23,22 @@ public class Response {
 		this.client = client;
 	}
 
-	public void flush(CompletionHandler<Integer, Object> flushHandler) {
-		if(headersSent == false){
-			//TODO: serialize headers to string.
-			headersSent = true;
-			headers.put("Content-Type", "text/xml");
-			StringBuilder hs = new StringBuilder("HTTP/1.1 200 OK\r\n");
-			
-			for(Entry<String, String> header: headers.entrySet()){
-				hs.append(header.getKey() + ": " + header.getValue());
-			}
-			
-			client.ch.write(ByteBuffer.wrap(hs.toString().getBytes()),null,null);
+	public void sendHeaders(CompletionHandler<Integer, Object> completionHandler) {
+		//TODO: serialize headers to string.
+		headersSent = true;
+		headers.put("Content-Type", "text/xml");
+		StringBuilder hs = new StringBuilder("HTTP/1.1 200 OK\r\n");
+		
+		for(Entry<String, String> header: headers.entrySet()){
+			hs.append(header.getKey() + ": " + header.getValue());
 		}
 		
-		client.ch.write(body, null, flushHandler);
+		client.ch.write(ByteBuffer.wrap(hs.toString().getBytes()),null,null);
+	}
+		
+	public void sendFile(FileChannel file){
+		//file.transferTo(0, 0, client.ch); //TODO
+		end();
 	}
 
 	public void end() {
