@@ -8,7 +8,6 @@ import java.util.Scanner;
 import webserver.Request;
 import webserver.Response;
 
-
 public class MIMEMiddleware implements Middleware {
 	public static final HashMap<String, String> mimeTypes = new HashMap<String, String>();
 
@@ -23,8 +22,8 @@ public class MIMEMiddleware implements Middleware {
 						if (!mimeType.startsWith("#")) {
 							String extensions = line.next();
 							mimeTypes.put(extensions, mimeType);
-						}
-						else line.nextLine();
+						} else
+							line.nextLine();
 					}
 				}
 				line.close();
@@ -37,21 +36,20 @@ public class MIMEMiddleware implements Middleware {
 	}
 
 	@Override
-	public void execute(Request request, Response response) throws MiddlewareException{
-		//request.path: /bajs.html  [html]
+	public void execute(Request request, Response response)
+			throws MiddlewareException {
+		// request.path: /bajs.html [html]
 		int index = request.path.lastIndexOf(".");
-		int p = Math.max(request.path.lastIndexOf('/'), request.path.lastIndexOf('\\'));
-		String extension = null;
+		int p = Math.max(request.path.lastIndexOf('/'),
+				request.path.lastIndexOf('\\'));
 		if (index > p) {
-		    extension = request.path.substring(index+1);
-		    String mimeType = mimeTypes.get(extension);
-		    System.out.println(mimeType);
+			String extension = request.path.substring(index + 1);
+			String mimeType = mimeTypes.get(extension);
+			response.headers.put("Content-Type", mimeType);
 		}
-	
-	if(extension==null) {
-		//throws 
-		//405 responcecode
-	}
-//	else request.addex
+		else {
+			response.code = Response.STATUS_404;
+			throw new MiddlewareException("MIME-type not found.");
+		}
 	}
 }
