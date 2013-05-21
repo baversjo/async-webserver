@@ -27,7 +27,9 @@ public class MIMEMiddleware implements Middleware {
 						else line.nextLine();
 					}
 				}
+				line.close();
 			}
+			sc.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			System.exit(1);

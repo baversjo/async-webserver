@@ -72,6 +72,7 @@ public class Response {
 
 	public void end() {
 		client.requestFinished();
+		client.close();//TODO: persistent connection
 	}
 	
 	public static final ByteBuffer STATUS_200 = ByteBuffer.wrap("200 OK\r\n".getBytes()),

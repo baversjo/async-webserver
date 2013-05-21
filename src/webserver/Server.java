@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import middleware.ConnectionMiddleware;
 import middleware.FileMiddleware;
 import middleware.HTTPVersionMiddleware;
 import middleware.MIMEMiddleware;
@@ -53,6 +54,7 @@ public class Server {
         
         middlewares.add(new HTTPVersionMiddleware());
         middlewares.add(new StaticHeadersMiddleware());
+        middlewares.add(new ConnectionMiddleware());
         middlewares.add(new MIMEMiddleware());
         middlewares.add(new FileMiddleware());
         
