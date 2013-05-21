@@ -115,6 +115,7 @@ public class Client implements Comparable<Client>{
 	private void sendResponse() {
 		Response response = new Response(this);
 		for(Middleware middleware: Server.middlewares){
+			
 			middleware.execute(request, response);
 		}
 		//TODO: if connection:close, then returnVal=false!

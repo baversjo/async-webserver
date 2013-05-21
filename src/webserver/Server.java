@@ -18,6 +18,7 @@ import java.util.PriorityQueue;
 import java.util.Set;
 
 import middleware.FileMiddleware;
+import middleware.MIMEMiddleware;
 import middleware.Middleware;
 
 
@@ -48,6 +49,7 @@ public class Server {
         }
         
         middlewares.add(new FileMiddleware());
+        middlewares.add(new MIMEMiddleware());
         
         new Server(port);
 	}
