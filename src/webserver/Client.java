@@ -6,29 +6,21 @@ import http_parser.HTTPParser;
 import http_parser.ParserSettings;
 import http_parser.ParserType;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
-import java.nio.charset.CharacterCodingException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
-
-import middleware.FileMiddleware;
+import java.nio.channels.SocketChannel;
 import middleware.Middleware;
 
 
 public class Client {
-	protected final AsynchronousSocketChannel ch;
+	protected final SocketChannel ch;
 	private final ByteBuffer buffer;
 	private Request request;
 	private ParserSettings settings;
 	private HTTPParser parser;
 	private String lastHeader;
-	private ClientReader reader;
+	private boolean returnVal;
 
-	public Client(AsynchronousSocketChannel ch){
+	public Client(SocketChannel ch){
 		this.ch = ch;
 		
 		
@@ -85,50 +77,32 @@ public class Client {
 			}
 		};
 		
-		reader = new ClientReader();
-		ch.read(buffer, buffer, reader);
 		
 	}
+	public void requestFinished() {
+		request = null;
+	}
+
+	public void close() {
+		returnVal = false;
+	}
+	
+	//returns false if connection should be closed.
+	public boolean doRead() {
+		returnVal = true;
+		
+		buffer.flip();
+		parser.execute(settings,buffer);
+		buffer.clear();
+
+		return returnVal;
+	}
+	
 	
 	private void sendResponse() {
 		Response response = new Response(this);
 		for(Middleware middleware: Server.middlewares){
 			middleware.execute(request, response);
 		}
-	}
-
-	private class ClientReader implements CompletionHandler<Integer, ByteBuffer>{
-
-		@Override
-		public void completed(Integer result, ByteBuffer attachment) {
-        	buffer.flip();
-        	
-        	parser.execute(settings,buffer);
-        	
-        	buffer.clear();
-        	if(ch.isOpen() && (request == null || request.completed == false)){
-        		ch.read(buffer, buffer, this);
-        	}
-        	
-		}
-
-		@Override
-		public void failed(Throwable exc, ByteBuffer attachment) {
-			System.err.println("ERROR: could not read data from client");
-		}
-		
-	}
-
-	public void requestFinished() {
-		request = null;
-		ch.read(buffer, buffer, reader);
-	}
-
-	public void close() {
-		try {
-			ch.close();
-		} catch (IOException e) {
-		}
-		
 	}
 }

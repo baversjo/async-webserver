@@ -2,19 +2,19 @@ package webserver;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.AsynchronousServerSocketChannel;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
-import java.nio.charset.CharacterCodingException;
+import java.net.ServerSocket;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.Set;
 
 import middleware.FileMiddleware;
 import middleware.Middleware;
@@ -28,7 +28,8 @@ public class Server {
 	
 	public static final LinkedList<Middleware> middlewares = new LinkedList<Middleware>(); 
 	
-	private int port;
+	
+	private Map<SocketChannel, Client> connectedClients;
 	
 	public static void main(String args[]){
         int port = 8060;
@@ -39,76 +40,69 @@ public class Server {
 	}
 	
 	public Server(int port){
-		this.port = port;
-		AsynchronousChannelGroup group;
 		
-        try {
-        	
-        	group = AsynchronousChannelGroup.withThreadPool(Executors
-                    .newSingleThreadExecutor());
-        	
-            final AsynchronousServerSocketChannel serverSocket = AsynchronousServerSocketChannel.open(group);
-            serverSocket.bind(new InetSocketAddress(this.port));
-
-
-            serverSocket.accept("Client connection", 
-                    new CompletionHandler<AsynchronousSocketChannel, Object>() {
-                public void completed(AsynchronousSocketChannel ch, Object att) {
-                    System.out.println("Accepted a connection");
-
-                    // accept the next connection
-                    serverSocket.accept("Client connection", this);
-
-                    // handle this connection
-                    Client client = new Client(ch);
-                }
-
-                public void failed(Throwable exc, Object att) {
-                    System.out.println("Failed to accept connection");
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-        
-        
-        System.out.println("Server accepting conenctions on port " + port);
-        
-        
-        // wait until group.shutdown()/shutdownNow(), or the thread is interrupted:
-        try {
-			group.awaitTermination(Long.MAX_VALUE, TimeUnit.HOURS);
-		} catch (InterruptedException e) {
-			System.out.println("Shutting down");
-			return;
-		}
-
-	}
-	
-	/*
-	protected void handleConnection(final AsynchronousSocketChannel ch){
+		connectedClients = new HashMap<SocketChannel, Client>();
 		
-		
-		
-		String response = "Buy more ฿itcoins!\n";
-		
-		CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
-		ByteBuffer buf;
+	    ServerSocketChannel server;
+	    Selector selector;
 		try {
-			buf = encoder.encode(CharBuffer.wrap(response));
-		} catch (CharacterCodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return;
-		}
-		ch.write(buf);
-		try {
-			ch.close();
+			
+			server = ServerSocketChannel.open();
+		    ServerSocket ss = server.socket();
+		    ss.bind(new InetSocketAddress(port));
+		    server.configureBlocking(false);
+		    
+		    selector = Selector.open();
+		    server.register(selector,SelectionKey.OP_ACCEPT);
+		    
 		} catch (IOException e) {
+			System.err.println("Failed starting server.");
 			e.printStackTrace();
+			return;
 		}
 		
+		System.out.println("Server accepting connections on port " + port);
+		
+	    while (true) {
+	    		try{
+	    			selector.select();
+	    		}catch(IOException e){
+	    			System.err.println("Select failed");
+	    			e.printStackTrace();
+	    		}
+	
+			Set<SelectionKey> ready = selector.selectedKeys();
+			Iterator<SelectionKey> iterator = ready.iterator();
+	
+			while (iterator.hasNext()) {
+				SelectionKey key = iterator.next();
+				iterator.remove();
+				if (key.isAcceptable()) {
+					SocketChannel channel;
+					try {
+						channel = server.accept();
+						System.out.println("Accept new connection.");
+						channel.configureBlocking(false);
+						
+					    channel.register(selector,SelectionKey.OP_READ);
+					    Client client = new Client(channel);
+					    connectedClients.put(channel, client);
+					} catch (IOException e) {
+						System.err.println("Failed accepting connection");
+						e.printStackTrace();
+					}
+
+				}
+				if(key.isReadable()){
+					SocketChannel channel = (SocketChannel)key.channel();
+					Client client = connectedClients.get(channel);
+					if(!client.doRead()){
+						//close connection
+						try { channel.close(); } catch (IOException e) {}
+						key.cancel();
+					}
+				}
+			}
+	    }
 	}
-	*/
 }

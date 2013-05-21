@@ -16,11 +16,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>lib/primitives.jar</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/http-parser.java/ext/primitives.jar</locationURI>
-		</link>
-		<link>
 			<name>src/http_parser/FieldData.java</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/http-parser.java/src/impl/http_parser/FieldData.java</locationURI>

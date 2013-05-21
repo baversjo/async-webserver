@@ -1,5 +1,6 @@
 package webserver;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileChannel;
@@ -8,36 +9,57 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class Response {
-	public ByteBuffer body;
 	public Map<String,String> headers;
 	
 	public static final int BUFFER_SIZE = 8192; //8Kb
+	
+	static final byte[] NEW_LINE = {13,10};
+	static final byte[] HTTP_1_OK = "HTTP/1.1 200 OK\r\n".getBytes();
 	
 	private boolean headersSent;
 	private Client client;
 	
 	public Response(Client client){
-		body = ByteBuffer.allocate(BUFFER_SIZE);
 		headers = new HashMap<String,String>();
 		headersSent = false;
 		this.client = client;
 	}
 
-	public void sendHeaders(CompletionHandler<Integer, Object> completionHandler) {
-		//TODO: serialize headers to string.
-		headersSent = true;
-		headers.put("Content-Type", "text/xml");
-		StringBuilder hs = new StringBuilder("HTTP/1.1 200 OK\r\n");
-		
-		for(Entry<String, String> header: headers.entrySet()){
-			hs.append(header.getKey() + ": " + header.getValue());
+	public void sendHeaders() {
+		if(!headersSent){
+			headersSent = true;
+			headers.put("Content-Type", "text/xml");
+			
+			ByteBuffer[] bb = new ByteBuffer[headers.size()+2];
+			
+			bb[0] = ByteBuffer.wrap(HTTP_1_OK);
+			
+			int i = 1;
+			for(Entry<String, String> header: headers.entrySet()){
+				bb[i] =ByteBuffer.wrap((header.getKey() + ": " + header.getValue()).getBytes());
+				i++;
+			}
+			
+			bb[i] = ByteBuffer.wrap(NEW_LINE);
+			try {
+				client.ch.write(bb); //TODO: wait for key.isWritable?
+			} catch (IOException e) {
+				System.err.println("Could not write to client");
+				e.printStackTrace();
+				client.close();
+			}
 		}
-		
-		client.ch.write(ByteBuffer.wrap(hs.toString().getBytes()),null,null);
 	}
 		
 	public void sendFile(FileChannel file){
-		//file.transferTo(0, 0, client.ch); //TODO
+		try {
+			sendHeaders();
+			file.transferTo(0, Long.MAX_VALUE, client.ch); //TODO while loop
+		} catch (IOException e) {
+			System.err.println("could not send file");
+			e.printStackTrace();
+			client.close();
+		}
 		end();
 	}
 
