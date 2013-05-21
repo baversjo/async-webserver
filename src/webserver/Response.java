@@ -41,7 +41,7 @@ public class Response {
 			
 			int i = 2;
 			for(Entry<String, String> header: headers.entrySet()){
-				bb[i] =ByteBuffer.wrap((header.getKey() + ": " + header.getValue()).getBytes()); //TODO: make more efficient.
+				bb[i] =ByteBuffer.wrap((header.getKey() + ": " + header.getValue() + "\r\n").getBytes());  //TODO: make more efficient.
 				i++;
 			}
 			
