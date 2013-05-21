@@ -36,7 +36,9 @@ public class FileMiddleware implements Middleware{
 			System.out.println("absolute:" + absolute_path.toString());
 			
 			final FileChannel fileChannel = FileChannel.open(absolute_path);
+			response.headers.put("Content-Length", String.valueOf(fileChannel.size()));
 			response.sendFile(fileChannel);
+			
 			
 			
 		} catch (IOException e) {

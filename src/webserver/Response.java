@@ -28,7 +28,7 @@ public class Response {
 	public void sendHeaders() {
 		if(!headersSent){
 			headersSent = true;
-			headers.put("Content-Type", "text/xml");
+			headers.put("Content-Type", "text/html");
 			
 			ByteBuffer[] bb = new ByteBuffer[headers.size()+2];
 			
@@ -36,7 +36,7 @@ public class Response {
 			
 			int i = 1;
 			for(Entry<String, String> header: headers.entrySet()){
-				bb[i] =ByteBuffer.wrap((header.getKey() + ": " + header.getValue()).getBytes());
+				bb[i] =ByteBuffer.wrap((header.getKey() + ": " + header.getValue() + "\r\n").getBytes());
 				i++;
 			}
 			
