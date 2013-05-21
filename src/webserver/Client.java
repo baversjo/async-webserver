@@ -8,20 +8,24 @@ import http_parser.ParserType;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import middleware.Middleware;
 
 
-public class Client {
+public class Client implements Comparable<Client>{
 	protected final SocketChannel ch;
 	private Request request;
 	private ParserSettings settings;
 	private HTTPParser parser;
 	private String lastHeader;
 	private boolean returnVal;
+	protected long lastCommunication;
+	protected SelectionKey key;
 
-	public Client(SocketChannel ch){
+	public Client(SocketChannel ch, SelectionKey key){
 		this.ch = ch;
+		this.key = key;
 		
 		parser = new HTTPParser(ParserType.HTTP_REQUEST);
 		
@@ -90,9 +94,12 @@ public class Client {
 		
 		ByteBuffer buff = ByteBuffer.allocate(Server.BUFFER_SIZE); //TODO: one buffer per thread?
 		try {
-			ch.read(buff);
+			int res = ch.read(buff);
+			if(res == -1){
+				returnVal = false; //close
+			}
 		} catch (IOException e) {
-			System.err.println("Socket read failed, closing connection");
+			System.err.println("Socket read failed");
 			returnVal = false;
 			e.printStackTrace();
 		}
@@ -109,5 +116,17 @@ public class Client {
 		for(Middleware middleware: Server.middlewares){
 			middleware.execute(request, response);
 		}
+		//TODO: if connection:close, then returnVal=false!
 	}
+	
+	public void updateLastCommunication() {
+		this.lastCommunication = System.currentTimeMillis();
+		
+	}
+
+	@Override
+	public int compareTo(Client o) {
+		return (int)((o.lastCommunication - this.lastCommunication)/1000);
+	}
+	
 }

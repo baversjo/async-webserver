@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import middleware.FileMiddleware;
@@ -22,6 +23,8 @@ import middleware.Middleware;
 
 public class Server {
 	public static final int BUFFER_SIZE = 8192; //8kb
+	public static final int VACUUM_TRIGGER = 100; //num connections before vacuum
+	public static final int VACUUM_LIMIT = 35*1000; //35 seconds
 	
 	public static final CharsetEncoder utf8Encoder = Charset.forName("UTF-8").newEncoder();
 	public static final CharsetDecoder utf8Decoder = Charset.forName("UTF-8").newDecoder();
@@ -30,6 +33,7 @@ public class Server {
 	
 	
 	private Map<SocketChannel, Client> connectedClients;
+	private PriorityQueue<Client> connectedClientsSorted;
 	
 	public static void main(String args[]){
 		String portStr = System.getenv("AWEB_PORT");
@@ -52,6 +56,8 @@ public class Server {
 		
 		connectedClients = new HashMap<SocketChannel, Client>();
 		
+		connectedClientsSorted = new PriorityQueue<Client>(VACUUM_TRIGGER);
+		
 	    ServerSocketChannel server;
 	    Selector selector;
 		try {
@@ -71,10 +77,10 @@ public class Server {
 		}
 		
 		System.out.println("Server accepting connections on port " + port);
-		
+		int newConnectionsSinceVacuum = 0; 
 	    while (true) {
 	    		try{
-	    			selector.select();
+	    			selector.select(VACUUM_LIMIT/4);
 	    		}catch(IOException e){
 	    			System.err.println("Select failed");
 	    			e.printStackTrace();
@@ -85,6 +91,11 @@ public class Server {
 	
 			while (iterator.hasNext()) {
 				SelectionKey key = iterator.next();
+				System.out.println("event" + " " + key.isReadable() + 
+						" " + key.isWritable() + 
+						" " + key.isAcceptable() +
+						" " + key.isConnectable() +
+						" " + key.isValid());
 				iterator.remove();
 				if (key.isAcceptable()) {
 					System.out.println("acceptable");
@@ -94,9 +105,11 @@ public class Server {
 						System.out.println("Accept new connection.");
 						channel.configureBlocking(false);
 						
-					    channel.register(selector,SelectionKey.OP_READ);
-					    Client client = new Client(channel);
+						SelectionKey newKey = channel.register(selector,SelectionKey.OP_READ);
+					    Client client = new Client(channel,newKey);
 					    connectedClients.put(channel, client);
+					    connectedClientsSorted.add(client);
+					    newConnectionsSinceVacuum++;
 					} catch (IOException e) {
 						System.err.println("Failed accepting connection");
 						e.printStackTrace();
@@ -104,16 +117,32 @@ public class Server {
 
 				}
 				if(key.isReadable()){
-					System.out.println("readable");
 					SocketChannel channel = (SocketChannel)key.channel();
 					Client client = connectedClients.get(channel);
 					if(!client.doRead()){
-						connectedClients.remove(channel);
-						try { channel.close(); } catch (IOException e) {}
-						key.cancel();
+						System.out.println("Closing connection");
+						closeClient(client);
 					}
 				}
 			}
+			if(newConnectionsSinceVacuum == VACUUM_TRIGGER){
+				System.out.println("VACUUM");
+				long now = System.currentTimeMillis();
+				while(connectedClientsSorted.peek().lastCommunication + VACUUM_LIMIT < now){
+					Client client = connectedClientsSorted.poll();
+					closeClient(client);
+				}
+				newConnectionsSinceVacuum = 0;
+			}
 	    }
+	}
+	
+	private void closeClient(Client client){
+		SocketChannel channel = client.ch;
+		connectedClients.remove(channel);
+		try { channel.close(); } catch (IOException e) {}
+		client.key.cancel();
+		client.lastCommunication = 0;
+		System.out.println("client close.");
 	}
 }
