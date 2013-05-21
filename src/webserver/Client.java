@@ -26,6 +26,7 @@ public class Client implements Comparable<Client>{
 	public Client(SocketChannel ch, SelectionKey key){
 		this.ch = ch;
 		this.key = key;
+		updateLastCommunication();
 		
 		parser = new HTTPParser(ParserType.HTTP_REQUEST);
 		

@@ -125,10 +125,13 @@ public class Server {
 					}
 				}
 			}
-			if(newConnectionsSinceVacuum == VACUUM_TRIGGER){
+			if(newConnectionsSinceVacuum > VACUUM_TRIGGER){
 				System.out.println("VACUUM");
 				long now = System.currentTimeMillis();
-				while(connectedClientsSorted.peek().lastCommunication + VACUUM_LIMIT < now){
+				while(
+						connectedClientsSorted.size() > 0 &&
+						connectedClientsSorted.peek().lastCommunication + VACUUM_LIMIT < now
+				){
 					Client client = connectedClientsSorted.poll();
 					closeClient(client);
 				}
