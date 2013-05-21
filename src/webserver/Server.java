@@ -32,7 +32,16 @@ public class Server {
 	private Map<SocketChannel, Client> connectedClients;
 	
 	public static void main(String args[]){
-        int port = 8060;
+		String portStr = System.getenv("AWEB_PORT");
+		int port = 0;
+		if(portStr == null){
+			throw new RuntimeException("Please specify the environment variable AWEB_PORT");
+		}else{
+			port = Integer.parseInt(portStr);
+		}
+        if(port <= 0){
+        		throw new RuntimeException("Invalid port specified (" + port +")");
+        }
         
         middlewares.add(new FileMiddleware());
         
@@ -78,6 +87,7 @@ public class Server {
 				SelectionKey key = iterator.next();
 				iterator.remove();
 				if (key.isAcceptable()) {
+					System.out.println("acceptable");
 					SocketChannel channel;
 					try {
 						channel = server.accept();
@@ -94,10 +104,11 @@ public class Server {
 
 				}
 				if(key.isReadable()){
+					System.out.println("readable");
 					SocketChannel channel = (SocketChannel)key.channel();
 					Client client = connectedClients.get(channel);
 					if(!client.doRead()){
-						//close connection
+						connectedClients.remove(channel);
 						try { channel.close(); } catch (IOException e) {}
 						key.cancel();
 					}

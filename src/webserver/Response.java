@@ -56,7 +56,7 @@ public class Response {
 			sendHeaders();
 			file.transferTo(0, Long.MAX_VALUE, client.ch); //TODO while loop
 		} catch (IOException e) {
-			System.err.println("could not send file");
+			System.err.println("Error: could not send file, closing connection");
 			e.printStackTrace();
 			client.close();
 		}

@@ -6,6 +6,7 @@ import http_parser.HTTPParser;
 import http_parser.ParserSettings;
 import http_parser.ParserType;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import middleware.Middleware;
@@ -13,7 +14,6 @@ import middleware.Middleware;
 
 public class Client {
 	protected final SocketChannel ch;
-	private final ByteBuffer buffer;
 	private Request request;
 	private ParserSettings settings;
 	private HTTPParser parser;
@@ -22,9 +22,6 @@ public class Client {
 
 	public Client(SocketChannel ch){
 		this.ch = ch;
-		
-		
-		buffer = ByteBuffer.allocate(Server.BUFFER_SIZE);//TODO: what happens if request is really big?
 		
 		parser = new HTTPParser(ParserType.HTTP_REQUEST);
 		
@@ -91,9 +88,17 @@ public class Client {
 	public boolean doRead() {
 		returnVal = true;
 		
-		buffer.flip();
-		parser.execute(settings,buffer);
-		buffer.clear();
+		ByteBuffer buff = ByteBuffer.allocate(Server.BUFFER_SIZE); //TODO: one buffer per thread?
+		try {
+			ch.read(buff);
+		} catch (IOException e) {
+			System.err.println("Socket read failed, closing connection");
+			returnVal = false;
+			e.printStackTrace();
+		}
+		buff.flip();
+		parser.execute(settings,buff);
+		buff.clear();
 
 		return returnVal;
 	}
