@@ -19,6 +19,7 @@ import java.util.Set;
 
 import middleware.FileMiddleware;
 import middleware.HTTPVersionMiddleware;
+import middleware.MIMEMiddleware;
 import middleware.Middleware;
 import middleware.StaticHeadersMiddleware;
 
@@ -50,8 +51,9 @@ public class Server {
         		throw new RuntimeException("Invalid port specified (" + port +")");
         }
         
-        middlewares.add(new StaticHeadersMiddleware());
         middlewares.add(new HTTPVersionMiddleware());
+        middlewares.add(new StaticHeadersMiddleware());
+        middlewares.add(new MIMEMiddleware());
         middlewares.add(new FileMiddleware());
         
         new Server(port);
