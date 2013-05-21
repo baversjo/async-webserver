@@ -43,9 +43,8 @@ public class MIMEMiddleware implements Middleware {
 		if (index > p) {
 		    extension = request.path.substring(index+1);
 		    String mimeType = mimeTypes.get(extension);
-		    System.out.println(mimeType);
+		    response.headers.put("Content-Type", mimeType);
 		}
-	
 	if(extension==null) {
 		//throws 
 		//405 responcecode
