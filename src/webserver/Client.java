@@ -38,7 +38,7 @@ public class Client implements Comparable<Client>{
 			
 			@Override
 			public int cb(HTTPParser parser) {
-				request = new Request(request.httpMethod);
+				request = new Request(parser.getHTTPMethod());
 				return 0;
 			}
 		};

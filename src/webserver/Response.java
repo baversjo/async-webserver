@@ -23,6 +23,8 @@ public class Response {
 	public Response(Client client){
 		headers = new HashMap<String,String>();
 		headersSent = false;
+		httpMajor=0;
+		httpMinor=0;
 		this.client = client;
 	}
 
@@ -36,7 +38,7 @@ public class Response {
 				code = STATUS_405; //noone handled the request, return method not allowed.
 			}
 			
-			bb[0] = ByteBuffer.wrap(("HTTP/"+httpMajor+"."+httpMinor).getBytes());
+			bb[0] = ByteBuffer.wrap(("HTTP/"+httpMajor+"."+httpMinor+" ").getBytes());
 			bb[1] = code;
 			
 			int i = 2;
