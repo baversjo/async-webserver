@@ -2,6 +2,7 @@ package webserver;
 
 import http_parser.HTTPCallback;
 import http_parser.HTTPDataCallback;
+import http_parser.HTTPMethod;
 import http_parser.HTTPParser;
 import http_parser.ParserSettings;
 import http_parser.ParserType;
@@ -11,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import middleware.Middleware;
+import middleware.MiddlewareException;
 
 
 public class Client implements Comparable<Client>{
@@ -36,7 +38,7 @@ public class Client implements Comparable<Client>{
 			
 			@Override
 			public int cb(HTTPParser parser) {
-				request = new Request();
+				request = new Request(request.httpMethod);
 				return 0;
 			}
 		};
@@ -54,6 +56,11 @@ public class Client implements Comparable<Client>{
 			@Override
 			public int cb(HTTPParser p, byte[] by, int pos, int len) {
 				lastHeader = new String(by);
+				
+				if(request.httpMajor == 0){
+					request.httpMajor = p.http_major;
+					request.httpMinor = p.http_minor;
+				}
 				return 0;
 				
 			}
@@ -72,7 +79,6 @@ public class Client implements Comparable<Client>{
 			
 			@Override
 			public int cb(HTTPParser parser) {
-				System.out.println(request.toString());
 				request.completed = true;
 				sendResponse();
 				return 0;
@@ -115,8 +121,14 @@ public class Client implements Comparable<Client>{
 	private void sendResponse() {
 		Response response = new Response(this);
 		for(Middleware middleware: Server.middlewares){
-			middleware.execute(request, response);
+			try{
+				middleware.execute(request, response);
+			}catch(MiddlewareException ex){
+				break;
+			}
 		}
+		response.sendHeaders();
+		response.end();
 		//TODO: if connection:close, then returnVal=false!
 	}
 	

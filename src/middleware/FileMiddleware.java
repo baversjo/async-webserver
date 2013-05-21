@@ -1,5 +1,7 @@
 package middleware;
 
+import http_parser.HTTPMethod;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -23,27 +25,33 @@ public class FileMiddleware implements Middleware{
 		}
 	}
 	@Override
-	public void execute(final Request request, final Response response) {
-		System.out.println(document_root);
-		try {
-			/*
-			 *    /hello.html
-			 *    TODO: http://google.se/hello.html
-			 */
-			String path = request.path;
-			
-			Path absolute_path = Paths.get(document_root,path);
-			System.out.println("absolute:" + absolute_path.toString());
-			
-			final FileChannel fileChannel = FileChannel.open(absolute_path);
-			response.sendFile(fileChannel);
-			
-			
-		} catch (IOException e) {
-			//TODO: 404
-			System.err.println("TODO: handle 404");
+	public void execute(final Request request, final Response response) throws MiddlewareException{
+		if(request.httpMethod == HTTPMethod.HTTP_GET || request.httpMethod == HTTPMethod.HTTP_HEAD){
+			try {
+				/*
+				 *    /hello.html
+				 *    TODO: http://google.se/hello.html
+				 */
+				String path = request.path;
+				
+				Path absolute_path = Paths.get(document_root,path);
+				System.out.println("absolute:" + absolute_path.toString());
+				
+				final FileChannel fileChannel = FileChannel.open(absolute_path);
+				response.code = Response.STATUS_200;
+				if(request.httpMethod == HTTPMethod.HTTP_GET){
+					response.sendFile(fileChannel);//will send headers and end	
+				}else{
+					response.sendHeaders();
+					response.end();
+				}
+				
+			} catch (IOException e) {
+				response.code = Response.STATUS_404;
+				response.sendHeaders();
+				response.end();
+				throw new MiddlewareException("File not found");
+			}
 		}
-		
 	}
-
 }
