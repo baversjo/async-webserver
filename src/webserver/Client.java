@@ -118,7 +118,6 @@ public class Client implements Comparable<Client>{
 		buff.flip();
 		parser.execute(settings,buff);
 		buff.clear();
-
 		return returnVal;
 	}
 	

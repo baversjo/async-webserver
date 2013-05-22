@@ -67,17 +67,17 @@ public class Server {
 		
 		connectedClientsSorted = new PriorityQueue<Client>(VACUUM_TRIGGER);
 		
-	    ServerSocketChannel server;
+	    ServerSocketChannel socketAccepter;
 	    Selector selector;
 		try {
 			
-			server = ServerSocketChannel.open();
-		    ServerSocket ss = server.socket();
+			socketAccepter = ServerSocketChannel.open();
+		    ServerSocket ss = socketAccepter.socket();
 		    ss.bind(new InetSocketAddress(port));
-		    server.configureBlocking(false);
+		    socketAccepter.configureBlocking(false);
 		    
 		    selector = Selector.open();
-		    server.register(selector,SelectionKey.OP_ACCEPT);
+		    socketAccepter.register(selector,SelectionKey.OP_ACCEPT);
 		    
 		} catch (IOException e) {
 			System.err.println("Failed starting server.");
@@ -95,28 +95,28 @@ public class Server {
 	    			e.printStackTrace();
 	    		}
 	
-			Set<SelectionKey> ready = selector.selectedKeys();
-			Iterator<SelectionKey> iterator = ready.iterator();
+			Set<SelectionKey> selectorKeys = selector.selectedKeys();
+			Iterator<SelectionKey> keyIterator = selectorKeys.iterator();
 	
-			while (iterator.hasNext()) {
-				SelectionKey key = iterator.next();
+			while (keyIterator.hasNext()) {
+				SelectionKey key = keyIterator.next();
 				System.out.println("event" + " " + key.isReadable() + 
 						" " + key.isWritable() + 
 						" " + key.isAcceptable() +
 						" " + key.isConnectable() +
 						" " + key.isValid());
-				iterator.remove();
+				keyIterator.remove();
 				if (key.isAcceptable()) {
 					System.out.println("acceptable");
-					SocketChannel channel;
+					SocketChannel clientChannel;
 					try {
-						channel = server.accept();
+						clientChannel = socketAccepter.accept();
 						System.out.println("Accept new connection.");
-						channel.configureBlocking(false);
+						clientChannel.configureBlocking(false);
 						
-						SelectionKey newKey = channel.register(selector,SelectionKey.OP_READ);
-					    Client client = new Client(channel,newKey);
-					    connectedClients.put(channel, client);
+						SelectionKey newKey = clientChannel.register(selector,SelectionKey.OP_READ);
+					    Client client = new Client(clientChannel,newKey);
+					    connectedClients.put(clientChannel, client);
 					    connectedClientsSorted.add(client);
 					    newConnectionsSinceVacuum++;
 					} catch (IOException e) {
