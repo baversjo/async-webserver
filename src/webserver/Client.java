@@ -25,7 +25,7 @@ public class Client implements Comparable<Client>{
 	protected long lastCommunication;
 	protected SelectionKey key;
 
-	public Client(SocketChannel ch, SelectionKey key){
+	public Client(SocketChannel ch){
 		this.ch = ch;
 		this.key = key;
 		updateLastCommunication();
