@@ -2,29 +2,33 @@ package webserver;
 
 import http_parser.HTTPCallback;
 import http_parser.HTTPDataCallback;
+import http_parser.HTTPMethod;
 import http_parser.HTTPParser;
 import http_parser.ParserSettings;
 import http_parser.ParserType;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import middleware.Middleware;
+import middleware.MiddlewareException;
 
 
-public class Client {
+public class Client implements Comparable<Client>{
 	protected final SocketChannel ch;
-	private final ByteBuffer buffer;
 	private Request request;
 	private ParserSettings settings;
 	private HTTPParser parser;
 	private String lastHeader;
 	private boolean returnVal;
+	protected long lastCommunication;
+	protected SelectionKey key;
 
-	public Client(SocketChannel ch){
+	public Client(SocketChannel ch, SelectionKey key){
 		this.ch = ch;
-		
-		
-		buffer = ByteBuffer.allocate(Server.BUFFER_SIZE);//TODO: what happens if request is really big?
+		this.key = key;
+		updateLastCommunication();
 		
 		parser = new HTTPParser(ParserType.HTTP_REQUEST);
 		
@@ -34,7 +38,7 @@ public class Client {
 			
 			@Override
 			public int cb(HTTPParser parser) {
-				request = new Request();
+				request = new Request(parser.getHTTPMethod());
 				return 0;
 			}
 		};
@@ -42,7 +46,12 @@ public class Client {
 		settings.on_path = new HTTPDataCallback(){
 			@Override
 			public int cb(HTTPParser p, byte[] by, int pos, int len) {
-				request.path = new String(by);
+				String path = new String(by);
+				if(path.equals( "/")){
+					path = "/index.html";
+				}
+				request.path = path;
+				System.out.println(request.path);
 				return 0;
 				
 			}
@@ -52,6 +61,11 @@ public class Client {
 			@Override
 			public int cb(HTTPParser p, byte[] by, int pos, int len) {
 				lastHeader = new String(by);
+				
+				if(request.httpMajor == 0){
+					request.httpMajor = p.http_major;
+					request.httpMinor = p.http_minor;
+				}
 				return 0;
 				
 			}
@@ -70,7 +84,6 @@ public class Client {
 			
 			@Override
 			public int cb(HTTPParser parser) {
-				System.out.println(request.toString());
 				request.completed = true;
 				sendResponse();
 				return 0;
@@ -91,10 +104,20 @@ public class Client {
 	public boolean doRead() {
 		returnVal = true;
 		
-		buffer.flip();
-		parser.execute(settings,buffer);
-		buffer.clear();
-
+		ByteBuffer buff = ByteBuffer.allocate(Server.BUFFER_SIZE); //TODO: one buffer per thread?
+		try {
+			int res = ch.read(buff);
+			if(res == -1){
+				returnVal = false; //close
+			}
+		} catch (IOException e) {
+			System.err.println("Socket read failed");
+			returnVal = false;
+			e.printStackTrace();
+		}
+		buff.flip();
+		parser.execute(settings,buff);
+		buff.clear();
 		return returnVal;
 	}
 	
@@ -102,7 +125,25 @@ public class Client {
 	private void sendResponse() {
 		Response response = new Response(this);
 		for(Middleware middleware: Server.middlewares){
-			middleware.execute(request, response);
+			try{
+				middleware.execute(request, response);
+			}catch(MiddlewareException ex){
+				break;
+			}
 		}
+		response.sendHeaders();
+		response.end();
+		//TODO: if connection:close, then returnVal=false!
 	}
+	
+	public void updateLastCommunication() {
+		this.lastCommunication = System.currentTimeMillis();
+		
+	}
+
+	@Override
+	public int compareTo(Client o) {
+		return (int)((o.lastCommunication - this.lastCommunication)/1000);
+	}
+	
 }

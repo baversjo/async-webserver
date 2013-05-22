@@ -1,18 +1,23 @@
 package webserver;
 
+import http_parser.HTTPMethod;
+
 import java.util.HashMap;
 import java.util.Map;
 
 
 public class Request {
 	public Map<String,String> headers;
-	public String httpVersion;
+	public int httpMajor;
+	public int httpMinor;
+	//public String method;
 	public String path;
-	public String httpMethod;
+	public HTTPMethod httpMethod;
 	protected boolean completed;
 	
-	public Request(){
+	public Request(HTTPMethod httpMethod){
 		headers = new HashMap<String,String>();
+		this.httpMethod = httpMethod; 
 		completed = false;
 	}
 	

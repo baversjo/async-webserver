@@ -2,47 +2,63 @@ package webserver;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public class Response {
-	public Map<String,String> headers;
-	
-	public static final int BUFFER_SIZE = 8192; //8Kb
-	
-	static final byte[] NEW_LINE = {13,10};
-	static final byte[] HTTP_1_OK = "HTTP/1.1 200 OK\r\n".getBytes();
-	
+	public Map<String, String> headers;
+	public byte[] code = null;
+
+	public static final int BUFFER_SIZE = 8192; // 8Kb
+
+	static final byte[] NEW_LINE = { 13, 10 };
+
 	private boolean headersSent;
 	private Client client;
-	
-	public Response(Client client){
-		headers = new HashMap<String,String>();
+	public int httpMajor;
+	public int httpMinor;
+
+	public boolean closeAfterEnd;
+
+	public Response(Client client) {
+		headers = new HashMap<String, String>();
 		headersSent = false;
+		httpMajor = 0;
+		httpMinor = 0;
+		closeAfterEnd = true;
 		this.client = client;
 	}
 
 	public void sendHeaders() {
-		if(!headersSent){
+		if (!headersSent) {
 			headersSent = true;
-			headers.put("Content-Type", "text/xml");
-			
-			ByteBuffer[] bb = new ByteBuffer[headers.size()+2];
-			
-			bb[0] = ByteBuffer.wrap(HTTP_1_OK);
-			
-			int i = 1;
-			for(Entry<String, String> header: headers.entrySet()){
-				bb[i] =ByteBuffer.wrap((header.getKey() + ": " + header.getValue()).getBytes());
+
+			ByteBuffer[] bb = new ByteBuffer[headers.size() + 3];
+
+			if (code == null) {
+				code = STATUS_405; // noone handled the request, return method
+									// not allowed.
+			}
+
+			bb[0] = ByteBuffer
+					.wrap(("HTTP/" + httpMajor + "." + httpMinor + " ")
+							.getBytes());
+			bb[1] = ByteBuffer.wrap(code);
+
+			int i = 2;
+			for (Entry<String, String> header : headers.entrySet()) {
+				bb[i] = ByteBuffer.wrap((header.getKey() + ": "
+						+ header.getValue() + "\r\n").getBytes()); // TODO: make
+																	// more
+																	// efficient.
 				i++;
 			}
-			
+
 			bb[i] = ByteBuffer.wrap(NEW_LINE);
 			try {
-				client.ch.write(bb); //TODO: wait for key.isWritable?
+				client.ch.write(bb); // TODO: wait for key.isWritable?
 			} catch (IOException e) {
 				System.err.println("Could not write to client");
 				e.printStackTrace();
@@ -50,13 +66,20 @@ public class Response {
 			}
 		}
 	}
-		
-	public void sendFile(FileChannel file){
+
+	private static final int chunkSize = 1048576; // 1 MB
+
+	public void sendFile(FileChannel file, long size) {
 		try {
 			sendHeaders();
-			file.transferTo(0, Long.MAX_VALUE, client.ch); //TODO while loop
+			long position = 0;
+			while (position < size) {
+				position += file.transferTo(position, size, client.ch);
+			}
+
 		} catch (IOException e) {
-			System.err.println("could not send file");
+			System.err
+					.println("Error: could not send file, closing connection");
 			e.printStackTrace();
 			client.close();
 		}
@@ -65,5 +88,16 @@ public class Response {
 
 	public void end() {
 		client.requestFinished();
+
+		if (closeAfterEnd) {
+			client.close();
+		}
 	}
+
+	public static final byte[] STATUS_200 = "200 OK\r\n".getBytes(),
+			STATUS_404 = "404 Not Found\r\n".getBytes(),
+			STATUS_405 = "405 Method Not Allowed\r\n".getBytes(),
+			STATUS_500 = "500 Internal Server Error\r\n".getBytes(),
+			STATUS_505 = "505 HTTP Version Not Supported\r\n".getBytes();
+
 }
