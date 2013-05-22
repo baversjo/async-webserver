@@ -58,10 +58,14 @@ public class Response {
 		}
 	}
 		
-	public void sendFile(FileChannel file){
+	private static final int chunkSize = 1048576; //1 MB
+	public void sendFile(FileChannel file, long size){
 		try {
 			sendHeaders();
-			file.transferTo(0, Long.MAX_VALUE, client.ch); //TODO while loop
+			long position = 0;
+			while(position < size){
+				position += file.transferTo(position, size, client.ch);
+			}
 		} catch (IOException e) {
 			System.err.println("Error: could not send file, closing connection");
 			e.printStackTrace();

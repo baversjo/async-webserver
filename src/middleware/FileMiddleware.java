@@ -38,12 +38,12 @@ public class FileMiddleware implements Middleware{
 				System.out.println("absolute:" + absolute_path.toString());
 				
 				final FileChannel fileChannel = FileChannel.open(absolute_path);
-				
+				long size = fileChannel.size();
 				response.headers.put("Content-Length", String.valueOf(fileChannel.size()));
 				
 				response.code = Response.STATUS_200;
 				if(request.httpMethod == HTTPMethod.HTTP_GET){
-					response.sendFile(fileChannel);//will send headers and end	
+					response.sendFile(fileChannel, size);//will send headers and end	
 				}else{
 					response.sendHeaders();
 					response.end();
