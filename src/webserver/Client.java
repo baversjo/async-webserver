@@ -46,7 +46,12 @@ public class Client implements Comparable<Client>{
 		settings.on_path = new HTTPDataCallback(){
 			@Override
 			public int cb(HTTPParser p, byte[] by, int pos, int len) {
-				request.path = new String(by);
+				String path = new String(by);
+				if(path.equals( "/")){
+					path = "/index.html";
+				}
+				request.path = path;
+				System.out.println(request.path);
 				return 0;
 				
 			}
