@@ -1,0 +1,17 @@
+\section{Användarhandledning}
+En server är inte något en vanlig användare tänker på när han är ute på Internet och surfar efter webbplatser. Han kommer i kontakt med servern när ett webförmulär ska laddas och endast då.
+Vi valde därför att skapa vår användarhandlening utifrån en som dagligen arbetar med servrar, det vill säga nätverksadministratörer. 
+Eftersom en nätverksadministratörs arbetsuppgifter handlar om att underhålla och upprätthålla servrar kändes detta som ett väldigt naturligt val.
+
+Det administratören måste tänka på då är skapa en mapp där alla formulär/ html filer ska finnas tillgängliga i. Detta för att när servern försöker nå filerna måste de finnas på en gemensam plats som man specifierar.
+
+
+\paragraph{1.}
+Javaprogrammet som ska köra processen måste få rättigheter till mappen som filerna ligger i. För att få rättigheterna finns en “environment” variabel kodad i programmet som ger sökvägen till den specifika mappen där html filerna ligger. För att ge programmet tillgång till din mapp ska du sätta variabeln till din sökväg för mappen. Det görs på olika sätt beroende på operativsystem, vilket en administratör vet.  
+Det som man också bör tänka på är att sätta en specifik port på servern, vilket görs på samma sätt som när man ska deklarera en sökväg i environment variabeln för mappen med html filer.
+
+\paragraph{2.}
+Eftersom vi använt bibliotek från java 1.7 för att skapa servern så måste admininstratören installera detta för att få servern att fungera. Utan Java 1.7 eller någon nyare version kommer inte servern att fungera eftersom java saknar framåtkompabilitet. 
+
+\paragraph{3.}
+Det sista steget är ganska självklart för en erfaren administratör samt datoranvändare, det vill säga exekvera Server.java i en lämplig kompilator som till exempel eclipse. 
