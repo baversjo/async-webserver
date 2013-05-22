@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 
 public class Response {
 	public Map<String,String> headers;
-	public ByteBuffer code = null;
+	public byte[] code = null;
 	
 	public static final int BUFFER_SIZE = 8192; //8Kb
 	
@@ -39,7 +39,7 @@ public class Response {
 			}
 			
 			bb[0] = ByteBuffer.wrap(("HTTP/"+httpMajor+"."+httpMinor+" ").getBytes());
-			bb[1] = code;
+			bb[1] = ByteBuffer.wrap(code);
 			
 			int i = 2;
 			for(Entry<String, String> header: headers.entrySet()){
@@ -79,10 +79,10 @@ public class Response {
 		client.close();//TODO: persistent connection
 	}
 	
-	public static final ByteBuffer STATUS_200 = ByteBuffer.wrap("200 OK\r\n".getBytes()),
-			STATUS_404 = ByteBuffer.wrap("404 Not Found\r\n".getBytes()),
-			STATUS_405 = ByteBuffer.wrap("405 Method Not Allowed\r\n".getBytes()),
-			STATUS_500 = ByteBuffer.wrap("500 Internal Server Error\r\n".getBytes()),
-			STATUS_505 = ByteBuffer.wrap("505 HTTP Version Not Supported\r\n".getBytes());
+	public static final byte[] STATUS_200 = "200 OK\r\n".getBytes(),
+			STATUS_404 = "404 Not Found\r\n".getBytes(),
+			STATUS_405 = "405 Method Not Allowed\r\n".getBytes(),
+			STATUS_500 = "500 Internal Server Error\r\n".getBytes(),
+			STATUS_505 = "505 HTTP Version Not Supported\r\n".getBytes();
 	
 }
