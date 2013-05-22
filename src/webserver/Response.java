@@ -19,12 +19,14 @@ public class Response {
 	private Client client;
 	public int httpMajor;
 	public int httpMinor;
+	public boolean closeAfterEnd;
 	
 	public Response(Client client){
 		headers = new HashMap<String,String>();
 		headersSent = false;
 		httpMajor=0;
 		httpMinor=0;
+		closeAfterEnd = true;
 		this.client = client;
 	}
 
@@ -76,7 +78,9 @@ public class Response {
 
 	public void end() {
 		client.requestFinished();
-		client.close();//TODO: persistent connection
+		if(closeAfterEnd){
+			client.close();
+		}
 	}
 	
 	public static final byte[] STATUS_200 = "200 OK\r\n".getBytes(),
