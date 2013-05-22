@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class Response {
+	
 	public Map<String, String> headers;
 	public byte[] code = null;
 
@@ -98,6 +99,6 @@ public class Response {
 			STATUS_404 = "404 Not Found\r\n".getBytes(),
 			STATUS_405 = "405 Method Not Allowed\r\n".getBytes(),
 			STATUS_500 = "500 Internal Server Error\r\n".getBytes(),
-			STATUS_505 = "505 HTTP Version Not Supported\r\n".getBytes();
-
+			STATUS_505 = "505 HTTP Version Not Supported\r\n".getBytes(), 
+			STATUS_304 = "304 Not Modified\r\n".getBytes();
 }
