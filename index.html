@@ -50,25 +50,29 @@
             <!-- Main hero unit for a primary marketing message or call to action -->
             <div class="hero-unit">
                 <h1>Async Webserver</h1>
-                <p>Highly performant, asynchronous http file server written in Java.</p>
+                <p> 
+					Highly performant, asynchronous HTTP file server.</p>
             </div>
 
             <!-- Example row of columns -->
             <div class="row">
                 <div class="span6">
                     <h2>Introduction</h2>
-                    <p>The server is very efficient, and uses the native sendfile(2) linux call.</p>
+                    <p>This site presents our project in the programming course Networkprogramming (<a href="http://cs.lth.se/kurs/eda095">EDA095</a>) which is a very fast, highly performant and asynchronous HTTP file server. Our server is written in Java (Java 1.7) and uses the native sendfile(2) linux call.
+						</p>
                 </div>
             </div>
             
             <div class="row">
                 <div class="span6">
                     <h2>Downloads</h2>
-                    <p>
-                      You can download the binary <a href="https://raw.github.com/baversjo/async-webserver/master/async-webserver.jar">here</a>.
-                      You can also download the source
-                      <a href="https://github.com/baversjo/async-webserver/archive/master.zip">here</a>
-                      or clone the <a href="https://github.com/baversjo/async-webserver">git repository</a>.
+                    <p>	The things you can download are listed below: <br>
+						<ul>
+						<li><a href="https://raw.github.com/baversjo/async-webserver/master/async-webserver.jar">Binary</a></li>
+						<li> <a href="https://github.com/baversjo/async-webserver/archive/master.zip">SourceCode</a></li>
+						<li> <a href="https://github.com/baversjo/async-webserver">Git Repository</a></li>
+						<li> <a href="https://docs.google.com/document/d/1-iIS6b6JowTv7dh0H80C3KCWOEesN97ulqOjgpozhMw/edit">Report</a></li>
+						</ul>
                     </p>
                 </div>
             </div>
@@ -76,14 +80,33 @@
             <div class="row">
                 <div class="span6">
                     <h2>Manual</h2>
-                    <p>Run using "java webserver.Server"</p>
+                    <p> Because the project is a webserver the user manual will be adapted to the knowledge of an network admin. <br>
+						<br>
+						
+						The first thing to do is to create a directory where all the html documents will be stored. You do this because the server needs to have all the files on a mutual directory to hace acces to them. 
+						<br>
+							<br>
+							The program which will be resposible for the processes needs to hace access to the directory where the files are contained. To get access to the directory we have created a variable which is an environment variable. This variable gives the program the correct searchpath for the directory. The admin knows how to set such a variable for the searchpath. Something else the admin should consider to fix before the server works is to the a specific port number. We have also created an enviroment variable for this to make it easy for the admin. 				<br>
+								<br>
+								We used the library from Java 1.7 to create the server. This result in so the admin needs to install Java 1.7 or a newer version. If you use an older version it will not work. This beacuse Java programs are not compatible with older version of Java. 
+								<br>
+									<br>
+									The last step is to execute the main program "Server.java" in a suitable compilor, i.e Eclipse.
+						</p>
                 </div>
             </div>
             
             <div class="row">
                 <div class="span6">
-                    <h2>About</h2>
-                    <p>Created as a final project in the course <a href="http://cs.lth.se/kurs/eda095">EDA095</a> at Lund University by Johan Bäversjö, Mergim Rama, Petter Henriksson and Mikael Gråborg.</p>
+                    <h2>About Us</h2>
+                    <p>
+						Lund University, Institute Of Technology <br>
+						<br>
+						Johan Bäversjö <br>
+						Mikael Gråborg <br>
+						Petter Henriksson <br>
+						Mergim Rama
+					</p>
                 </div>
             </div>
             
