@@ -20,11 +20,14 @@ public class Response {
 	public int httpMajor;
 	public int httpMinor;
 
+	public boolean closeAfterEnd;
+
 	public Response(Client client) {
 		headers = new HashMap<String, String>();
 		headersSent = false;
 		httpMajor = 0;
 		httpMinor = 0;
+		closeAfterEnd = true;
 		this.client = client;
 	}
 
@@ -70,10 +73,10 @@ public class Response {
 		try {
 			sendHeaders();
 			long position = 0;
-				while (position < size) {
-					position += file.transferTo(position, size, client.ch);
-				}
-			
+			while (position < size) {
+				position += file.transferTo(position, size, client.ch);
+			}
+
 		} catch (IOException e) {
 			System.err
 					.println("Error: could not send file, closing connection");
@@ -85,7 +88,10 @@ public class Response {
 
 	public void end() {
 		client.requestFinished();
-		client.close();// TODO: persistent connection
+
+		if (closeAfterEnd) {
+			client.close();
+		}
 	}
 
 	public static final byte[] STATUS_200 = "200 OK\r\n".getBytes(),
