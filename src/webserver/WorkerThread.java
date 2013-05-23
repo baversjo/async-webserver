@@ -21,7 +21,7 @@ public class WorkerThread extends Thread {
 	private int max_clients;
 
 	public WorkerThread(int i, int max_clients) {
-		super("AWEB worker " + i);
+		super("Worker " + i);
 		this.threadId = i;
 		connectedClients = new HashMap<SocketChannel, Client>();
 		connectedClientsSorted = new PriorityQueue<Client>(
