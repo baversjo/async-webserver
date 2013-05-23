@@ -2,6 +2,7 @@ package webserver;
 
 import http_parser.HTTPMethod;
 
+import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ public class Request {
 	public String path;
 	public HTTPMethod httpMethod;
 	protected boolean completed;
+	public SocketAddress ip;
 	
 	public Request(HTTPMethod httpMethod){
 		headers = new HashMap<String,String>();

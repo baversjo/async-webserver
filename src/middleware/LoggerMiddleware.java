@@ -20,6 +20,13 @@ public class LoggerMiddleware implements Middleware {
 		sb.append(request.httpMethod.name());
 		sb.append(" ");
 		sb.append(request.path);
+		sb.append(" ");
+		sb.append(request.ip);
+		String ua = request.headers.get("user-agent");
+		if(ua != null){
+			sb.append(" ");
+			sb.append(ua);	
+		}
 		System.out.println(sb.toString());
 
 	}

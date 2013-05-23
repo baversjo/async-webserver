@@ -25,7 +25,7 @@ public class Client implements Comparable<Client>{
 	protected SelectionKey key;
 	private WorkerThread worker;
 
-	public Client(SocketChannel ch, WorkerThread worker){
+	public Client(final SocketChannel ch, WorkerThread worker){
 		this.ch = ch;
 		this.worker = worker;
 		updateLastCommunication();
@@ -39,6 +39,10 @@ public class Client implements Comparable<Client>{
 			@Override
 			public int cb(HTTPParser parser) {
 				request = new Request(parser.getHTTPMethod());
+				try {
+					request.ip = ch.getRemoteAddress();
+				} catch (IOException e) {
+				}
 				return 0;
 			}
 		};
