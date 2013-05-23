@@ -49,7 +49,6 @@ public class Client implements Comparable<Client>{
 					path = "/index.html";
 				}
 				request.path = path;
-				System.out.println(request.path);
 				return 0;
 				
 			}
@@ -131,7 +130,6 @@ public class Client implements Comparable<Client>{
 		}
 		response.sendHeaders();
 		response.end();
-		//TODO: if connection:close, then returnVal=false!
 	}
 	
 	public void updateLastCommunication() {

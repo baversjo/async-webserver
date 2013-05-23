@@ -47,12 +47,10 @@ public class WorkerThread extends Thread {
 		while (true) {
 
 			if (block == true) {
-				System.out.println("started waiting");
 				try {
 					wait();
 				} catch (InterruptedException e) {
 				}
-				System.out.println("fin waiting");
 				block = false;
 			}
 			try {
@@ -77,9 +75,7 @@ public class WorkerThread extends Thread {
 				if (key.isReadable()) {
 					SocketChannel channel = (SocketChannel) key.channel();
 					Client client = connectedClients.get(channel);
-					System.out.println("read on worker " + threadId);
 					if (!client.doRead()) {
-						System.out.println("Closing connection");
 						closeClient(client);
 					}
 				}

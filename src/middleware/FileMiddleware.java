@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import webserver.Request;
@@ -45,47 +43,50 @@ public class FileMiddleware implements Middleware {
 				String path = request.path;
 
 				Path absolute_path = Paths.get(document_root, path);
-				System.out.println("absolute:" + absolute_path.toString());
-				try {
-					String ifModifiedSince = request.headers
-							.get("if-modified-since");
-					Date modifiedOnClient = StaticHeadersMiddleware.rfc1123Format
-							.parse(ifModifiedSince);
-					Date modifiedOnServer = new Date(new File(
-							absolute_path.toString()).lastModified());
-					if (modifiedOnServer.compareTo(modifiedOnClient) > 0) {
-						final FileChannel fileChannel = FileChannel
-								.open(absolute_path);
-						long size = fileChannel.size();
-						response.headers.put("Content-Length",
-								String.valueOf(fileChannel.size()));
-						response.code = Response.STATUS_200;
-						if (request.httpMethod == HTTPMethod.HTTP_GET) {
-							response.sendFile(fileChannel, size);// will send
-							// headers and
-							// end
-						} else {
-							response.sendHeaders();
-							response.end();
+				
+				boolean sendFile = true;
+				String ifModifiedSince = request.headers
+						.get("if-modified-since");
+				
+				Date modifiedOnServer = new Date(new File(
+						absolute_path.toString()).lastModified());
+				
+				if(ifModifiedSince != null){
+					try {
+						Date modifiedOnClient =  StaticHeadersMiddleware.rfc1123Format
+								.parse(ifModifiedSince);
+						
+						if (modifiedOnServer.getTime() <= modifiedOnClient.getTime()) {
+							sendFile = false;
 						}
 					}
-
-					else {
-						response.code = Response.STATUS_304;
-						response.headers.remove("Content-Type");
-						response.sendHeaders();
-						response.end();
-						//TODO: Send header
+					catch (ParseException e) {}
+					catch (NumberFormatException e) {}
+				}
+				
+				if(sendFile){
+					FileChannel fileChannel = FileChannel
+							.open(absolute_path);
+					
+					long size = fileChannel.size();
+					response.headers.put("Content-Length",
+							String.valueOf(fileChannel.size()));
+					
+					response.headers.put("Last-Modified", 
+							StaticHeadersMiddleware.rfc1123Format.format(modifiedOnServer));
+					
+					response.code = Response.STATUS_200;
+					if (request.httpMethod == HTTPMethod.HTTP_GET) {
+						response.sendFile(fileChannel, size);// will send
 					}
-				} catch (ParseException e) {
-					// TODO: Throw exception or system out print?
-					e.printStackTrace();
+				}
+				else {
+					response.code = Response.STATUS_304;
+					response.headers.remove("Content-Type");
 				}
 
 			} catch (IOException e) {
 				response.code = Response.STATUS_404;
-				response.sendHeaders();
-				response.end();
 				throw new MiddlewareException("File not found");
 			}
 		}
