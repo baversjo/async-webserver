@@ -46,7 +46,7 @@ public class WorkerThread extends Thread {
 		System.out.println("Worker thread " + threadId + " started");
 		while (true) {
 
-			if (block == true) {
+			if (block) {
 				System.out.println("started waiting");
 				try {
 					wait();
