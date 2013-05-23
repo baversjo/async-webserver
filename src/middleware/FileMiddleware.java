@@ -42,7 +42,13 @@ public class FileMiddleware implements Middleware {
 				 */
 				String path = request.path;
 
-				Path absolute_path = Paths.get(document_root, path);
+				Path absolute_path = Paths.get(document_root, path).normalize();
+				
+				
+				
+				if(absolute_path.toString().indexOf(document_root) < 0){
+					error(response,"Tried to access file outside of document root", Response.STATUS_404);
+				}
 				
 				boolean sendFile = true;
 				String ifModifiedSince = request.headers
@@ -88,9 +94,15 @@ public class FileMiddleware implements Middleware {
 				}
 
 			} catch (IOException e) {
-				response.code = Response.STATUS_404;
-				throw new MiddlewareException("File not found");
+				error(response,"File not found", Response.STATUS_404);
 			}
 		}
+	}
+	
+	private void error(Response response, String message, byte[] responseCode) throws MiddlewareException{
+		response.code = responseCode;
+		response.headers.remove("Content-Type");
+		response.headers.put("Content-Length","0");
+		throw new MiddlewareException(message);
 	}
 }

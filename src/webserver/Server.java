@@ -25,7 +25,7 @@ public class Server {
 	public static final int VACUUM_LIMIT = 35 * 1000; // 35 seconds
 
 	public static final LinkedList<Middleware> middlewares = new LinkedList<Middleware>();
-	public static final String VERSION = "AWEB 0.1 (Java)";
+	public static final String VERSION = "WIKING 0.2 (Java)";
 	private static final int MAX_CLIENTS = 400; //1024 is default in ubuntu
 
 	private WorkerThread[] workers;
@@ -109,8 +109,6 @@ public class Server {
 					try {
 						clientChannel = socketAccepter.accept();
 						clientChannel.configureBlocking(false);
-						
-						System.out.println("new client");
 
 						WorkerThread worker = workers[lastWorker];
 						lastWorker++;

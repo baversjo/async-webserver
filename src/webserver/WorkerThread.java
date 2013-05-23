@@ -49,8 +49,6 @@ public class WorkerThread extends Thread {
 		while (true) {
 
 			if (block) {
-				System.out.println("started waiting");
-
 				try {
 					wait();
 				} catch (InterruptedException e) {
