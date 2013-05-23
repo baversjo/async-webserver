@@ -2,7 +2,6 @@ package webserver;
 
 import http_parser.HTTPCallback;
 import http_parser.HTTPDataCallback;
-import http_parser.HTTPMethod;
 import http_parser.HTTPParser;
 import http_parser.ParserSettings;
 import http_parser.ParserType;
@@ -27,7 +26,6 @@ public class Client implements Comparable<Client>{
 
 	public Client(SocketChannel ch){
 		this.ch = ch;
-		this.key = key;
 		updateLastCommunication();
 		
 		parser = new HTTPParser(ParserType.HTTP_REQUEST);
@@ -60,7 +58,7 @@ public class Client implements Comparable<Client>{
 		settings.on_header_field = new HTTPDataCallback(){
 			@Override
 			public int cb(HTTPParser p, byte[] by, int pos, int len) {
-				lastHeader = new String(by);
+				lastHeader = new String(by).toLowerCase();
 				
 				if(request.httpMajor == 0){
 					request.httpMajor = p.http_major;
