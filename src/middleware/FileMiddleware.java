@@ -48,7 +48,7 @@ public class FileMiddleware implements Middleware {
 				System.out.println("absolute:" + absolute_path.toString());
 				try {
 					String ifModifiedSince = request.headers
-							.get("If-Modified-Since");
+							.get("if-modified-since");
 					Date modifiedOnClient = StaticHeadersMiddleware.rfc1123Format
 							.parse(ifModifiedSince);
 					Date modifiedOnServer = new Date(new File(
