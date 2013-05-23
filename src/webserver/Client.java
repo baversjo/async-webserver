@@ -141,5 +141,8 @@ public class Client implements Comparable<Client>{
 	public int compareTo(Client o) {
 		return (int)((o.lastCommunication - this.lastCommunication)/1000);
 	}
+	public boolean requestIsEmpty(){
+		return (request == null);
+	}
 	
 }

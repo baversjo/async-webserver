@@ -77,9 +77,12 @@ public class WorkerThread extends Thread {
 				if (key.isReadable()) {
 					SocketChannel channel = (SocketChannel) key.channel();
 					Client client = connectedClients.get(channel);
-					if (!client.doRead()) {
-						closeClient(client);
+					if (client.requestIsEmpty()) {
+						if (!client.doRead()) {
+							closeClient(client);
+						}
 					}
+				
 				}
 			}
 
@@ -88,7 +91,7 @@ public class WorkerThread extends Thread {
 				long now = System.currentTimeMillis();
 				while (connectedClientsSorted.size() > 0
 						&& connectedClientsSorted.peek().lastCommunication
-						+ Server.VACUUM_LIMIT < now) {
+								+ Server.VACUUM_LIMIT < now) {
 					Client client = connectedClientsSorted.poll();
 					closeClient(client);
 				}
