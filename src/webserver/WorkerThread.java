@@ -6,9 +6,18 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+
+import middleware.ConnectionMiddleware;
+import middleware.FileMiddleware;
+import middleware.HTTPVersionMiddleware;
+import middleware.LoggerMiddleware;
+import middleware.MIMEMiddleware;
+import middleware.Middleware;
+import middleware.StaticHeadersMiddleware;
 
 public class WorkerThread extends Thread {
 
@@ -19,10 +28,21 @@ public class WorkerThread extends Thread {
 	private int threadId;
 	public volatile boolean block;
 	private int max_clients;
+	
+	public Middleware[] middlewares;
 
 	public WorkerThread(int i, int max_clients) {
 		super("Worker " + i);
 		this.threadId = i;
+		
+		middlewares = new Middleware[6];
+		middlewares[0] = new LoggerMiddleware();
+		middlewares[1] = new HTTPVersionMiddleware();
+		middlewares[2] = new StaticHeadersMiddleware();
+		middlewares[3] = new ConnectionMiddleware();
+		middlewares[4] = new MIMEMiddleware();
+		middlewares[5] = new FileMiddleware();
+		
 		connectedClients = new HashMap<SocketChannel, Client>();
 		connectedClientsSorted = new PriorityQueue<Client>(
 				Server.VACUUM_TRIGGER);
@@ -67,12 +87,7 @@ public class WorkerThread extends Thread {
 
 			while (keyIterator.hasNext()) {
 				SelectionKey key = keyIterator.next();
-				/*
-				 * System.out.println("thread "+threadId+" event" + " " +
-				 * key.isReadable() + " " + key.isWritable() + " " +
-				 * key.isAcceptable() + " " + key.isConnectable() + " " +
-				 * key.isValid());
-				 */
+
 				keyIterator.remove();
 				if (key.isReadable()) {
 					SocketChannel channel = (SocketChannel) key.channel();

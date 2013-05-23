@@ -38,7 +38,7 @@ public class MIMEMiddleware implements Middleware {
 	@Override
 	public void execute(Request request, Response response)
 			throws MiddlewareException {
-		// request.path: /bajs.html [html]
+		
 		int index = request.path.lastIndexOf(".");
 		int p = Math.max(request.path.lastIndexOf('/'),
 				request.path.lastIndexOf('\\'));

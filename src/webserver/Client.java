@@ -23,9 +23,11 @@ public class Client implements Comparable<Client>{
 	private boolean returnVal;
 	protected long lastCommunication;
 	protected SelectionKey key;
+	private WorkerThread worker;
 
-	public Client(SocketChannel ch){
+	public Client(SocketChannel ch, WorkerThread worker){
 		this.ch = ch;
+		this.worker = worker;
 		updateLastCommunication();
 		
 		parser = new HTTPParser(ParserType.HTTP_REQUEST);
@@ -121,7 +123,7 @@ public class Client implements Comparable<Client>{
 	
 	private void sendResponse() {
 		Response response = new Response(this);
-		for(Middleware middleware: Server.middlewares){
+		for(Middleware middleware: worker.middlewares){
 			try{
 				middleware.execute(request, response);
 			}catch(MiddlewareException ex){

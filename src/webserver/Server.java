@@ -25,7 +25,6 @@ public class Server {
 													// vacuum
 	public static final int VACUUM_LIMIT = 35 * 1000; // 35 seconds
 
-	public static final LinkedList<Middleware> middlewares = new LinkedList<Middleware>();
 	public static final String VERSION = "WIKING 0.2 (Java)";
 	private static final int MAX_CLIENTS = 400; //1024 is default in ubuntu
 
@@ -46,13 +45,6 @@ public class Server {
 		if (port <= 0) {
 			throw new RuntimeException("Invalid port specified (" + port + ")");
 		}
-
-		middlewares.add(new LoggerMiddleware());
-		middlewares.add(new HTTPVersionMiddleware()); //TODO: middleware per thread!
-		middlewares.add(new StaticHeadersMiddleware());
-		middlewares.add(new ConnectionMiddleware());
-		middlewares.add(new MIMEMiddleware());
-		middlewares.add(new FileMiddleware());
 
 		new Server(port);
 	}
@@ -118,7 +110,7 @@ public class Server {
 							lastWorker = 0;
 						}
 
-						Client client = new Client(clientChannel);
+						Client client = new Client(clientChannel, worker);
 						worker.delegateClient(client);
 						worker.block = true;
 						worker.selector.wakeup();
