@@ -18,8 +18,9 @@ public class WorkerThread extends Thread {
 	private volatile int newConnectionsSinceVacuum;
 	private int threadId;
 	public volatile boolean block;
+	private int max_clients;
 
-	public WorkerThread(int i) {
+	public WorkerThread(int i, int max_clients) {
 		super("AWEB worker " + i);
 		this.threadId = i;
 		connectedClients = new HashMap<SocketChannel, Client>();
@@ -27,6 +28,7 @@ public class WorkerThread extends Thread {
 				Server.VACUUM_TRIGGER);
 		newConnectionsSinceVacuum = 0;
 		block = false;
+		this.max_clients = max_clients;
 
 		try {
 			selector = Selector.open();
@@ -87,15 +89,20 @@ public class WorkerThread extends Thread {
 			}
 
 			if (newConnectionsSinceVacuum > Server.VACUUM_TRIGGER) {
-				System.out.println("VACUUM");
+				System.out.println("VACUUM "+threadId+" ==================================");
 				long now = System.currentTimeMillis();
-				while (connectedClientsSorted.size() > 0
-						&& connectedClientsSorted.peek().lastCommunication
-								+ Server.VACUUM_LIMIT < now) {
+				int nbrOfClients = connectedClientsSorted.size();
+				while (nbrOfClients > max_clients ||
+						(nbrOfClients > 0 && 
+						connectedClientsSorted.peek().lastCommunication + Server.VACUUM_LIMIT < now)
+				) {
+					System.out.println("	vacuum close");
 					Client client = connectedClientsSorted.poll();
 					closeClient(client);
+					nbrOfClients--;
 				}
 				newConnectionsSinceVacuum = 0;
+				System.out.println("END "+threadId+" ==================================");
 			}
 		}
 	}
@@ -109,7 +116,7 @@ public class WorkerThread extends Thread {
 		}
 		client.key.cancel();
 		client.lastCommunication = 0;
-		System.out.println("client close.");
+		//System.out.println("client close.");
 	}
 
 	public synchronized void stopBlocking() {

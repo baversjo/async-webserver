@@ -62,7 +62,6 @@ public class Response {
 				client.ch.write(bb); // TODO: wait for key.isWritable?
 			} catch (IOException e) {
 				System.err.println("Could not write to client");
-				e.printStackTrace();
 				client.close();
 			}
 		}
@@ -75,13 +74,13 @@ public class Response {
 			sendHeaders();
 			long position = 0;
 			while (position < size) {
+				
 				position += file.transferTo(position, size, client.ch);
 			}
 
 		} catch (IOException e) {
 			System.err
 					.println("Error: could not send file, closing connection");
-			e.printStackTrace();
 			client.close();
 		}
 		end();

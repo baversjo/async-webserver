@@ -48,13 +48,13 @@ public class FileMiddleware implements Middleware {
 				String ifModifiedSince = request.headers
 						.get("if-modified-since");
 				
-				Date modifiedOnServer = new Date(new File(
-						absolute_path.toString()).lastModified());
+				File f = new File(absolute_path.toString());
+				Date modifiedOnServer = new Date(f.lastModified());
 				
 				if(ifModifiedSince != null){
 					try {
 						Date modifiedOnClient =  StaticHeadersMiddleware.rfc1123Format
-								.parse(ifModifiedSince);
+								.get().parse(ifModifiedSince);
 						
 						if (modifiedOnServer.getTime() <= modifiedOnClient.getTime()) {
 							sendFile = false;
@@ -73,12 +73,14 @@ public class FileMiddleware implements Middleware {
 							String.valueOf(fileChannel.size()));
 					
 					response.headers.put("Last-Modified", 
-							StaticHeadersMiddleware.rfc1123Format.format(modifiedOnServer));
+							StaticHeadersMiddleware.rfc1123Format
+								.get().format(modifiedOnServer));
 					
 					response.code = Response.STATUS_200;
 					if (request.httpMethod == HTTPMethod.HTTP_GET) {
 						response.sendFile(fileChannel, size);// will send
 					}
+					fileChannel.close();
 				}
 				else {
 					response.code = Response.STATUS_304;

@@ -139,7 +139,7 @@ public class Client implements Comparable<Client>{
 
 	@Override
 	public int compareTo(Client o) {
-		return (int)((o.lastCommunication - this.lastCommunication)/1000);
+		return (int)((this.lastCommunication - o.lastCommunication)/1000);
 	}
 	public boolean requestIsEmpty(){
 		return (request == null);

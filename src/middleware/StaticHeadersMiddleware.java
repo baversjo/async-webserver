@@ -1,6 +1,5 @@
 package middleware;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -12,15 +11,20 @@ import webserver.Server;
 
 public class StaticHeadersMiddleware implements Middleware {
 	
-	public final static DateFormat rfc1123Format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 	
-	static {
-        rfc1123Format.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
+    public static final ThreadLocal<SimpleDateFormat> rfc1123Format =
+        new ThreadLocal<SimpleDateFormat>() {
+            @Override protected SimpleDateFormat initialValue() {
+            	SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+            	format.setTimeZone(TimeZone.getTimeZone("GMT"));
+            	return format;
+            }
+        };
+
 
 	@Override
 	public void execute(Request request, Response response) throws MiddlewareException{
-		response.headers.put("Date", rfc1123Format.format(new Date()));
+		response.headers.put("Date", rfc1123Format.get().format(new Date()));
 		response.headers.put("Server", Server.VERSION);
 	}
 

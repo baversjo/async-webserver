@@ -26,6 +26,7 @@ public class Server {
 
 	public static final LinkedList<Middleware> middlewares = new LinkedList<Middleware>();
 	public static final String VERSION = "AWEB 0.1 (Java)";
+	private static final int MAX_CLIENTS = 400; //1024 is default in ubuntu
 
 	private WorkerThread[] workers;
 	private int lastWorker;
@@ -65,7 +66,7 @@ public class Server {
 	private void startServer() {
 
 		for (int i = 0; i < cores; i++) {
-			WorkerThread worker = new WorkerThread(i);
+			WorkerThread worker = new WorkerThread(i,MAX_CLIENTS/cores);
 			workers[i] = worker;
 			worker.start();
 		}
@@ -108,6 +109,8 @@ public class Server {
 					try {
 						clientChannel = socketAccepter.accept();
 						clientChannel.configureBlocking(false);
+						
+						System.out.println("new client");
 
 						WorkerThread worker = workers[lastWorker];
 						lastWorker++;
@@ -121,8 +124,8 @@ public class Server {
 						worker.selector.wakeup();
 						SelectionKey newKey = clientChannel.register(
 								worker.selector, SelectionKey.OP_READ);
-						worker.stopBlocking();
 						client.key = newKey;
+						worker.stopBlocking();
 
 					} catch (IOException e) {
 						System.err.println("Failed accepting connection");
