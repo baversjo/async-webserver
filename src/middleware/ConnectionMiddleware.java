@@ -16,9 +16,7 @@ public class ConnectionMiddleware implements Middleware {
 
 		response.headers.put("Connection",CONN_CLOSE);
 		String connHeader = request.headers.get("Connection");
-		if(connHeader != null){
-			connHeader = connHeader.toLowerCase();
-		}
+		
 		String connRes = CONN_CLOSE;
 		if(request.httpMinor == 0){
 			

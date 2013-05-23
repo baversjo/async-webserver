@@ -12,7 +12,7 @@ import webserver.Server;
 
 public class StaticHeadersMiddleware implements Middleware {
 	
-	public final static DateFormat rfc1123Format = new SimpleDateFormat("EEE, dd MMM yyyyy HH:mm:ss z", Locale.US);
+	public final static DateFormat rfc1123Format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 	
 	static {
         rfc1123Format.setTimeZone(TimeZone.getTimeZone("GMT"));

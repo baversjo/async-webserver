@@ -104,13 +104,9 @@ public class Server {
 				SelectionKey key = keyIterator.next();
 				keyIterator.remove();
 				if (key.isAcceptable()) {
-					System.out.println("acceptable");
 					SocketChannel clientChannel;
 					try {
 						clientChannel = socketAccepter.accept();
-						// TODO: code below in WorkerThread
-
-						System.out.println("Accept new connection.");
 						clientChannel.configureBlocking(false);
 
 						WorkerThread worker = workers[lastWorker];
