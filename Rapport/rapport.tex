@@ -1,0 +1,61 @@
+\documentclass[a4paper]{article}% !TEX encoding = UTF-8 Unicode
+
+\usepackage[T1]{fontenc}		% För svenska bokstäver
+\usepackage[utf8]{inputenc}		% Teckenkodning UTF8
+\usepackage[swedish]{babel}		% För svensk avstavning och svenska
+                          		% rubriker (t ex "Innehållsförteckning")
+\usepackage{hyperref} 			% Lägga till länkar i texten.
+\usepackage{mathtools}			% Matematiska formler
+\usepackage{listings}
+\usepackage{textcomp}
+\usepackage{xcolor}
+
+\title{
+	Event Driven HTTP Server:\\
+	Projekt i Nätverksprogrammering (EDA095)\\
+	EDA, Institutionen för Datavetenskap, Lund Tekniska Högskola\\
+	Roger Henriksson}
+\author{
+Johan Bäversjö, C11 (dic11jba@student.lu.se)\\
+Mikael Gråborg, C11 (dic11mgr@student.lu.se)\\
+Petter Henriksson, C11 (dic11phe@student.lu.se)\\
+Mergim Rama, C11 (dic11mra@student.lu.se)\\
+}
+
+
+% *** Tillägg för denna rapport. ***
+% Paket:
+\usepackage{graphicx}         % För att inkludera bilder.
+
+% Kommandon i denna rapport
+\newcommand{\code}[1]{\texttt{#1}} % För programkod i text.
+% *** Slut på tillägg för denna rapport. ***
+
+
+\begin{document}              % Början på dokumentet
+
+\maketitle
+\centerline{\includegraphics[scale = 0.6]{LTH.jpg}}
+\thispagestyle{empty}
+
+\newpage
+\setcounter{page}{1}
+
+
+\tableofcontents
+\newpage
+
+\input{bakgrund.tex}
+
+\input{kravspecifikation.tex}
+
+\input{modell.tex}
+
+\input{anvandarhandledning.tex}
+
+\input{utvardering.tex}
+
+
+
+
+\end{document}
