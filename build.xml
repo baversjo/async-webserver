@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<!-- Configuration of the Ant build system to generate a Jar file --> 
+<project name="TestMain" default="CreateJar">
+  <target name="CreateJar" description="Create Jar file">
+         <jar destfile="WikingServer.jar" basedir=".">
+            <fileset dir="./bin" includes="**/*.class" />
+	        <zipgroupfileset dir="./lib" includes="*.jar" />
+    		</jar>
+  </target>
+</project>

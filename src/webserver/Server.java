@@ -34,11 +34,11 @@ public class Server {
 	private int port;
 
 	public static void main(String args[]) {
-		String portStr = System.getenv("AWEB_PORT");
+		String portStr = System.getenv("PORT");
 		int port = 0;
 		if (portStr == null) {
 			throw new RuntimeException(
-					"Please specify the environment variable AWEB_PORT");
+					"Please specify the environment variable PORT");
 		} else {
 			port = Integer.parseInt(portStr);
 		}
