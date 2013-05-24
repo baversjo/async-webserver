@@ -31,7 +31,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </a>
-                    <a class="brand" href="#">Async Webserver</a>
+                    <a class="brand" href="#">Wiking Webserver</a>
                     <!--
                     <div class="nav-collapse collapse">
                         <ul class="nav">
@@ -50,24 +50,43 @@
             <!-- Main hero unit for a primary marketing message or call to action -->
             <div class="hero-unit">
                 <h1>Wiking Webserver</h1>
-                <p> 
-					Highly performant, event driven HTTP file server.</p>
+                <p> Highly performant, event driven HTTP file server.</p>
             </div>
 
             <!-- Example row of columns -->
             <div class="row">
                 <div class="span6">
                     <h2>Introduction</h2>
-                    <p>This site presents our project in the programming course Network Programming (<a href="http://cs.lth.se/kurs/eda095">EDA095</a>) which is a highly performant, event driven HTTP file server. Our server is written in Java (Java 1.7) and uses the native sendfile(2) linux call.
+                    <p>Wiking is a a highly performant, event driven HTTP file server. The server is written in Java 1.7. It uses the native sendfile(2) linux call to achieve high throughput, and an event driven architecture for concurrency. To make use of multiple cores in modern computers, one "worker" thread is created for each core on the server to handle requests.
 						</p>
+            <p>
+              This project was created by four students at Lund University as a project in the course Network Programming (<a href="http://cs.lth.se/kurs/eda095">EDA095</a>).
+            </p>
                 </div>
             </div>
+            
+            
             
             <div class="row">
                 <div class="span6">
                     <h2>Performance</h2>
                     <p><div id="hc_container"></div></p>
-                    <p>It's ok</p>
+                    <p>The chart above shows how fast different web servers can serve files over HTTP. Wiking is almost twice as fast as Apache 2, the most common web server. Nginx on the other hand, performs better than our server. Considering that Apache and Nginx both are written in C which offers superior performance to Java, Wiking performs well given the circumstances. We're happy that a web server written in Java can perform better than a alternative written in C.</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="span6">
+                    <h2>Architecture</h2>
+                    <p><img src="img/architecture.png"/></p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="span12">
+                    <h2>Screenshot</h2>
+                    <p><img src="img/screenshot.png"/></p>
+                    <p>The screenshot above shows the server running with its log attached to the terminal. The first line shows the command used to start the server.</p>
                 </div>
             </div>
             
@@ -75,10 +94,10 @@
                 <div class="span6">
                     <h2>Downloads</h2>
 						<ul>
-						<li><a href="https://github.com/baversjo/async-webserver/raw/master/WikingServer.jar">Binary</a></li>
-						<li> <a href="https://github.com/baversjo/async-webserver/archive/master.zip">Source Code</a></li>
+						<li><a href="https://github.com/baversjo/async-webserver/raw/master/WikingServer.jar">Binary (.jar)</a></li>
+						<li> <a href="https://github.com/baversjo/async-webserver/archive/master.zip">Source Code (.zip)</a></li>
 						<li> <a href="https://github.com/baversjo/async-webserver">Git Repository</a></li>
-						<li> <a href="https://github.com/baversjo/async-webserver/raw/master/Rapport/rapport.pdf">Report</a></li>
+						<li> <a href="https://github.com/baversjo/async-webserver/raw/master/Rapport/rapport.pdf">Report (.pdf)</a></li>
 						</ul>
                     </p>
                 </div>
@@ -87,19 +106,18 @@
             <div class="row">
                 <div class="span6">
                     <h2>Manual</h2>
-                    <p> Because the project is a webserver the user manual will be adapted to the knowledge of an network admin. <br>
-						<br>
-						
-						The first thing to do is to create a directory where all the html documents will be stored. You do this because the server needs to have all the files on a mutual directory to hace acces to them. 
-						<br>
-							<br>
-							The program which will be resposible for the processes needs to hace access to the directory where the files are contained. To get access to the directory we have created a variable which is an environment variable. This variable gives the program the correct searchpath for the directory. The admin knows how to set such a variable for the searchpath. Something else the admin should consider to fix before the server works is to the a specific port number. We have also created an enviroment variable for this to make it easy for the admin. 				<br>
-								<br>
-								We used the library from Java 1.7 to create the server. This result in so the admin needs to install Java 1.7 or a newer version. If you use an older version it will not work. This beacuse Java programs are not compatible with older version of Java. 
-								<br>
-									<br>
-									The last step is to execute the main program "Server.java" in a suitable compilor, i.e Eclipse.
-						</p>
+                    <p> Basic UNIX administration skills are assumed in this manual. The only dependency is Java 1.7. The server should run on any operating system, but performs best on the Linux kernel.</p>
+                    <p>Export the AWEB_DOCUMENT_ROOT environment variable to point to a web document root directory.
+                      For example:
+                      <pre>export AWEB_DOCUMENT_ROOT=/var/www/</pre>
+                      Do the same with a PORT variable:
+                      <pre>export PORT=8060</pre>
+                    </p>
+                    <p>
+                      Now start start the server. A text file with <a href="https://raw.github.com/baversjo/async-webserver/master/MIMEtypes.txt">MIME type mappings</a> needs to be present in the current working directory. This is included when running the server from the git repository root directory.
+                      The server can be started with the following command:
+                      <pre>java -cp WikingServer.jar webserver.Server</pre>
+                    </p>
                 </div>
             </div>
             
