@@ -7,6 +7,7 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import middleware.ConnectionMiddleware;
 import middleware.FileMiddleware;
@@ -18,7 +19,9 @@ import middleware.StaticHeadersMiddleware;
 
 public class WorkerThread extends Thread {
 
-	private volatile PriorityQueue<Client> connectedClientsSorted;
+	private PriorityQueue<Client> clients;
+	private ConcurrentLinkedQueue<Client> newClients;
+	
 	protected Selector selector;
 	private volatile int newConnectionsSinceVacuum;
 	private int threadId;
@@ -39,8 +42,10 @@ public class WorkerThread extends Thread {
 		middlewares[4] = new MIMEMiddleware();
 		middlewares[5] = new FileMiddleware();
 		
-		connectedClientsSorted = new PriorityQueue<Client>(
+		clients = new PriorityQueue<Client>(
 				Server.VACUUM_TRIGGER);
+		
+		newClients = new ConcurrentLinkedQueue<Client>();
 		newConnectionsSinceVacuum = 0;
 		block = false;
 		this.max_clients = max_clients;
@@ -54,7 +59,7 @@ public class WorkerThread extends Thread {
 	}
 
 	public void delegateClient(Client client) {
-		connectedClientsSorted.add(client);
+		newClients.offer(client);
 		newConnectionsSinceVacuum++;
 	}
 
@@ -81,6 +86,11 @@ public class WorkerThread extends Thread {
 
 			Set<SelectionKey> selectorKeys = selector.selectedKeys();
 			Iterator<SelectionKey> keyIterator = selectorKeys.iterator();
+			
+			//add new clients
+			while(!newClients.isEmpty()){
+				clients.offer(newClients.poll());
+			}
 
 			while (keyIterator.hasNext()) {
 				SelectionKey key = keyIterator.next();
@@ -89,18 +99,18 @@ public class WorkerThread extends Thread {
 				if (key.isValid() && key.isReadable()) {
 					Client client = (Client) key.attachment();
 					if (client.requestIsEmpty()) {
-						connectedClientsSorted.remove(client);
+						clients.remove(client);
 						if (!client.doRead(readBuffer)) {
 							client.close();
 						}else{
-							connectedClientsSorted.add(client);
+							clients.offer(client);
 						}
 					}
 				}
 				if(key.isValid() && key.isWritable()){
 					Client client = (Client) key.attachment();
 					if(!client.doWrite()){
-						connectedClientsSorted.remove(client);
+						clients.remove(client);
 						client.close();
 					}
 				}
@@ -109,13 +119,13 @@ public class WorkerThread extends Thread {
 			if (newConnectionsSinceVacuum > Server.VACUUM_TRIGGER) {
 				System.out.println("VACUUM "+threadId+" ==================================");
 				long now = System.currentTimeMillis();
-				int nbrOfClients = connectedClientsSorted.size();
+				int nbrOfClients = clients.size();
 				while (nbrOfClients > max_clients ||
 						(nbrOfClients > 0 && 
-						connectedClientsSorted.peek().lastCommunication + Server.VACUUM_LIMIT < now)
+						clients.peek().lastCommunication + Server.VACUUM_LIMIT < now)
 				) {
 					System.out.println("	vacuum close");
-					Client client = connectedClientsSorted.poll();
+					Client client = clients.poll();
 					client.close();
 					nbrOfClients--;
 				}
