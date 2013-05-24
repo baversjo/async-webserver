@@ -88,21 +88,23 @@ public class WorkerThread extends Thread {
 				if (key.isValid() && key.isReadable()) {
 					Client client = (Client) key.attachment();
 					if (client.requestIsEmpty()) {
+						connectedClientsSorted.remove(client);
 						if (!client.doRead()) {
 							closeClient(client);
+						}else{
+							connectedClientsSorted.add(client);
 						}
 					}
 				}
 				if(key.isValid() && key.isWritable()){
 					Client client = (Client) key.attachment();
 					if(!client.doWrite()){
+						connectedClientsSorted.remove(client);
 						closeClient(client);
 					}
 				}
 			}
 			
-			/*
-			//TODO: this sucks. We 
 			if (newConnectionsSinceVacuum > Server.VACUUM_TRIGGER) {
 				System.out.println("VACUUM "+threadId+" ==================================");
 				long now = System.currentTimeMillis();
@@ -119,13 +121,11 @@ public class WorkerThread extends Thread {
 				newConnectionsSinceVacuum = 0;
 				System.out.println("END "+threadId+" ==================================");
 			}
-			*/
 		}
 	}
 
 	private void closeClient(Client client) {
 		SocketChannel channel = client.ch;
-		//connectedClientsSorted.remove(client); not needed, vaccuum will take care of that.
 		try {
 			channel.close();
 		} catch (IOException e) {
