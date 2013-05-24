@@ -31,59 +31,13 @@ public class Response {
 		closeAfterEnd = true;
 		this.client = client;
 	}
-
-	public void sendHeaders() {
-		if (!headersSent) {
-			headersSent = true;
-
-			ByteBuffer[] bb = new ByteBuffer[headers.size() + 3];
-
-			if (code == null) {
-				code = STATUS_405; // noone handled the request, return method
-									// not allowed.
-			}
-
-			bb[0] = ByteBuffer
-					.wrap(("HTTP/" + httpMajor + "." + httpMinor + " ")
-							.getBytes());
-			bb[1] = ByteBuffer.wrap(code);
-
-			int i = 2;
-			for (Entry<String, String> header : headers.entrySet()) {
-				bb[i] = ByteBuffer.wrap((header.getKey() + ": "
-						+ header.getValue() + "\r\n").getBytes()); // TODO: make
-																	// more
-																	// efficient.
-				i++;
-			}
-
-			bb[i] = ByteBuffer.wrap(NEW_LINE);
-			try {
-				client.ch.write(bb); // TODO: wait for key.isWritable?
-			} catch (IOException e) {
-				System.err.println("Could not write to client");
-				client.close();
-			}
-		}
-	}
-
-	private static final int chunkSize = 1048576; // 1 MB
+	
+	private FileChannel fileToSend;
+	private long fileSize = 0;
 
 	public void sendFile(FileChannel file, long size) {
-		try {
-			sendHeaders();
-			long position = 0;
-			while (position < size) {
-				
-				position += file.transferTo(position, size, client.ch);
-			}
-
-		} catch (IOException e) {
-			System.err
-					.println("Error: could not send file, closing connection");
-			client.close();
-		}
-		end();
+		fileToSend = file;
+		fileSize = size;
 	}
 
 	public void end() {
@@ -93,7 +47,67 @@ public class Response {
 			client.close();
 		}
 	}
+	
+	private long filePosition = 0;
+	private ByteBuffer[] hb;
+	
+	//returns true if everything written, false if more to write.
+	public boolean write() {
+		
+		if(hb == null){
+			hb = new ByteBuffer[headers.size() + 3];
 
+			if (code == null) {
+				code = STATUS_405; // noone handled the request, return method
+									// not allowed.
+			}
+
+			hb[0] = ByteBuffer
+					.wrap(("HTTP/" + httpMajor + "." + httpMinor + " ")
+							.getBytes());
+			hb[1] = ByteBuffer.wrap(code);
+
+			int i = 2;
+			for (Entry<String, String> header : headers.entrySet()) {
+				hb[i] = ByteBuffer.wrap((header.getKey() + ": "
+						+ header.getValue() + "\r\n").getBytes());
+				i++;
+			}
+
+			hb[i] = ByteBuffer.wrap(NEW_LINE);
+		}
+		
+		if (!headersSent) {
+			try {
+				client.ch.write(hb);
+				if(hb[hb.length-1].remaining() == 0){
+					headersSent = true;
+				}else{
+					return false;
+				}
+			} catch (IOException e) {
+				System.err.println("Could not write to client");
+				client.close();
+			}
+		}
+		
+		if(fileToSend != null){
+			try {
+				filePosition += fileToSend.transferTo(filePosition, fileSize, client.ch);
+				if(filePosition != fileSize){
+					return false; //write again
+				}
+			} catch (IOException e) {
+				System.err.println("Error: could not send file, closing connection");
+				client.close();
+			}
+		}
+		
+		//if we get here, the request is finished! 
+		end();
+		return true;
+	}
+	
 	public static final byte[] STATUS_200 = "200 OK\r\n".getBytes(),
 			STATUS_404 = "404 Not Found\r\n".getBytes(),
 			STATUS_405 = "405 Method Not Allowed\r\n".getBytes(),

@@ -24,6 +24,8 @@ public class Client implements Comparable<Client>{
 	protected long lastCommunication;
 	protected SelectionKey key;
 	private WorkerThread worker;
+	
+	private Response response;
 
 	public Client(final SocketChannel ch, WorkerThread worker){
 		this.ch = ch;
@@ -88,6 +90,7 @@ public class Client implements Comparable<Client>{
 			@Override
 			public int cb(HTTPParser parser) {
 				request.completed = true;
+				key.interestOps(SelectionKey.OP_WRITE);//prepare for writing
 				sendResponse();
 				return 0;
 			}
@@ -124,9 +127,18 @@ public class Client implements Comparable<Client>{
 		return returnVal;
 	}
 	
+	public boolean doWrite(){
+		returnVal = true;
+		if(response.write()){
+			key.interestOps(SelectionKey.OP_READ);//prepare for another incoming request
+			response = null;
+		}
+		return returnVal;
+	}
+	
 	
 	private void sendResponse() {
-		Response response = new Response(this);
+		response = new Response(this);
 		for(Middleware middleware: worker.middlewares){
 			try{
 				middleware.execute(request, response);
@@ -134,8 +146,6 @@ public class Client implements Comparable<Client>{
 				break;
 			}
 		}
-		response.sendHeaders();
-		response.end();
 	}
 	
 	public void updateLastCommunication() {

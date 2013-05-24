@@ -6,7 +6,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -21,7 +20,6 @@ import middleware.StaticHeadersMiddleware;
 
 public class WorkerThread extends Thread {
 
-	private volatile Map<SocketChannel, Client> connectedClients;
 	private volatile PriorityQueue<Client> connectedClientsSorted;
 	protected Selector selector;
 	private volatile int newConnectionsSinceVacuum;
@@ -43,7 +41,6 @@ public class WorkerThread extends Thread {
 		middlewares[4] = new MIMEMiddleware();
 		middlewares[5] = new FileMiddleware();
 		
-		connectedClients = new HashMap<SocketChannel, Client>();
 		connectedClientsSorted = new PriorityQueue<Client>(
 				Server.VACUUM_TRIGGER);
 		newConnectionsSinceVacuum = 0;
@@ -59,7 +56,6 @@ public class WorkerThread extends Thread {
 	}
 
 	public void delegateClient(Client client) {
-		connectedClients.put(client.ch, client);
 		connectedClientsSorted.add(client);
 		newConnectionsSinceVacuum++;
 	}
@@ -89,18 +85,24 @@ public class WorkerThread extends Thread {
 				SelectionKey key = keyIterator.next();
 
 				keyIterator.remove();
-				if (key.isReadable()) {
-					SocketChannel channel = (SocketChannel) key.channel();
-					Client client = connectedClients.get(channel);
+				if (key.isValid() && key.isReadable()) {
+					Client client = (Client) key.attachment();
 					if (client.requestIsEmpty()) {
 						if (!client.doRead()) {
 							closeClient(client);
 						}
 					}
-				
+				}
+				if(key.isValid() && key.isWritable()){
+					Client client = (Client) key.attachment();
+					if(!client.doWrite()){
+						closeClient(client);
+					}
 				}
 			}
-
+			
+			/*
+			//TODO: this sucks. We 
 			if (newConnectionsSinceVacuum > Server.VACUUM_TRIGGER) {
 				System.out.println("VACUUM "+threadId+" ==================================");
 				long now = System.currentTimeMillis();
@@ -117,19 +119,20 @@ public class WorkerThread extends Thread {
 				newConnectionsSinceVacuum = 0;
 				System.out.println("END "+threadId+" ==================================");
 			}
+			*/
 		}
 	}
 
 	private void closeClient(Client client) {
 		SocketChannel channel = client.ch;
-		connectedClients.remove(channel);
+		//connectedClientsSorted.remove(client); not needed, vaccuum will take care of that.
 		try {
 			channel.close();
 		} catch (IOException e) {
 		}
 		client.key.cancel();
 		client.lastCommunication = 0;
-		//System.out.println("client close.");
+		System.out.println("client close.");
 	}
 
 	public synchronized void stopBlocking() {

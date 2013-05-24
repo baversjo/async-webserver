@@ -8,16 +8,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Set;
-
-import middleware.ConnectionMiddleware;
-import middleware.FileMiddleware;
-import middleware.HTTPVersionMiddleware;
-import middleware.LoggerMiddleware;
-import middleware.MIMEMiddleware;
-import middleware.Middleware;
-import middleware.StaticHeadersMiddleware;
 
 public class Server {
 	public static final int BUFFER_SIZE = 8192; // 8kb
@@ -103,7 +94,7 @@ public class Server {
 					try {
 						clientChannel = socketAccepter.accept();
 						clientChannel.configureBlocking(false);
-
+						clientChannel.socket().setSoTimeout(VACUUM_LIMIT); //TODO: check if this closes socket.
 						WorkerThread worker = workers[lastWorker];
 						lastWorker++;
 						if (lastWorker == cores) {
@@ -115,7 +106,7 @@ public class Server {
 						worker.block = true;
 						worker.selector.wakeup();
 						SelectionKey newKey = clientChannel.register(
-								worker.selector, SelectionKey.OP_READ);
+								worker.selector, SelectionKey.OP_READ, client);
 						client.key = newKey;
 						worker.stopBlocking();
 

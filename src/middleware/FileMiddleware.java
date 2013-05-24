@@ -86,7 +86,6 @@ public class FileMiddleware implements Middleware {
 					if (request.httpMethod == HTTPMethod.HTTP_GET) {
 						response.sendFile(fileChannel, size);// will send
 					}
-					fileChannel.close();
 				}
 				else {
 					response.code = Response.STATUS_304;
