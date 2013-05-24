@@ -96,6 +96,8 @@ public class Response {
 				filePosition += fileToSend.transferTo(filePosition, fileSize, client.ch);
 				if(filePosition != fileSize){
 					return false; //write again
+				}else{
+					fileToSend.close();
 				}
 			} catch (IOException e) {
 				System.err.println("Error: could not send file, closing connection");
