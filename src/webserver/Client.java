@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import middleware.Middleware;
 import middleware.MiddlewareException;
 
@@ -25,12 +28,17 @@ public class Client implements Comparable<Client>{
 	protected SelectionKey key;
 	private WorkerThread worker;
 	
-	private Response response;
+	private Queue<Response> responses;
+	private boolean gotOneFullRequest;
+	private boolean open;
 
 	public Client(final SocketChannel ch, WorkerThread worker){
 		this.ch = ch;
 		this.worker = worker;
 		updateLastCommunication();
+		open = true;
+		
+		responses = new LinkedBlockingQueue<Response>();
 		
 		parser = new HTTPParser(ParserType.HTTP_REQUEST);
 		
@@ -90,7 +98,7 @@ public class Client implements Comparable<Client>{
 			@Override
 			public int cb(HTTPParser parser) {
 				request.completed = true;
-				key.interestOps(SelectionKey.OP_WRITE);//prepare for writing
+				gotOneFullRequest = true;
 				sendResponse();
 				return 0;
 			}
@@ -104,13 +112,25 @@ public class Client implements Comparable<Client>{
 
 	public void close() {
 		returnVal = false;
+		if(open){
+			try {
+				ch.close();
+				key.cancel();
+				lastCommunication = 0;
+				for(Response response : responses){
+					if(response.fileToSend != null){
+						response.fileToSend.close();
+					}
+				}
+			} catch (IOException e) {}
+			open = false;
+		}
 	}
 	
 	//returns false if connection should be closed.
-	public boolean doRead() {
+	public boolean doRead(ByteBuffer buff) {
 		returnVal = true;
-		
-		ByteBuffer buff = ByteBuffer.allocate(Server.BUFFER_SIZE); //TODO: one buffer per thread?
+		gotOneFullRequest = false;
 		try {
 			int res = ch.read(buff);
 			if(res == -1){
@@ -124,21 +144,38 @@ public class Client implements Comparable<Client>{
 		buff.flip();
 		parser.execute(settings,buff);
 		buff.clear();
+		
+		if(gotOneFullRequest){
+			key.interestOps(SelectionKey.OP_WRITE);
+		}
 		return returnVal;
 	}
 	
 	public boolean doWrite(){
 		returnVal = true;
-		if(response.write()){
-			key.interestOps(SelectionKey.OP_READ);//prepare for another incoming request
-			response = null;
+		Response response;
+		while(true){
+			response = responses.peek();
+			if(response == null){ //no more buffered responses, start reading again.
+				if(key.isValid()){
+					key.interestOps(SelectionKey.OP_READ);
+				}
+				break;
+			}else{
+				if(response.write()){ //wrote entire response, continue
+					responses.remove();
+					
+				}else{ //response not finished
+					break;
+				}
+			}
 		}
 		return returnVal;
 	}
 	
 	
 	private void sendResponse() {
-		response = new Response(this);
+		Response response = new Response(this);
 		for(Middleware middleware: worker.middlewares){
 			try{
 				middleware.execute(request, response);
@@ -146,6 +183,8 @@ public class Client implements Comparable<Client>{
 				break;
 			}
 		}
+		//TODO: optimizaiton: try writing response, and only buffer if not everything was written.
+		responses.add(response);
 	}
 	
 	public void updateLastCommunication() {

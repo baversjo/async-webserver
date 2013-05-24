@@ -1,12 +1,10 @@
 package webserver;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -62,6 +60,9 @@ public class WorkerThread extends Thread {
 
 	public synchronized void run() {
 		System.out.println("Worker thread " + threadId + " started");
+		
+		ByteBuffer readBuffer = ByteBuffer.allocate(Server.BUFFER_SIZE);
+		
 		while (true) {
 
 			if (block) {
@@ -89,8 +90,8 @@ public class WorkerThread extends Thread {
 					Client client = (Client) key.attachment();
 					if (client.requestIsEmpty()) {
 						connectedClientsSorted.remove(client);
-						if (!client.doRead()) {
-							closeClient(client);
+						if (!client.doRead(readBuffer)) {
+							client.close();
 						}else{
 							connectedClientsSorted.add(client);
 						}
@@ -100,7 +101,7 @@ public class WorkerThread extends Thread {
 					Client client = (Client) key.attachment();
 					if(!client.doWrite()){
 						connectedClientsSorted.remove(client);
-						closeClient(client);
+						client.close();
 					}
 				}
 			}
@@ -115,24 +116,13 @@ public class WorkerThread extends Thread {
 				) {
 					System.out.println("	vacuum close");
 					Client client = connectedClientsSorted.poll();
-					closeClient(client);
+					client.close();
 					nbrOfClients--;
 				}
 				newConnectionsSinceVacuum = 0;
 				System.out.println("END "+threadId+" ==================================");
 			}
 		}
-	}
-
-	private void closeClient(Client client) {
-		SocketChannel channel = client.ch;
-		try {
-			channel.close();
-		} catch (IOException e) {
-		}
-		client.key.cancel();
-		client.lastCommunication = 0;
-		System.out.println("client close.");
 	}
 
 	public synchronized void stopBlocking() {

@@ -100,7 +100,6 @@ public class Server {
 						if (lastWorker == cores) {
 							lastWorker = 0;
 						}
-
 						Client client = new Client(clientChannel, worker);
 						worker.delegateClient(client);
 						worker.block = true;

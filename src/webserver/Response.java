@@ -32,7 +32,7 @@ public class Response {
 		this.client = client;
 	}
 	
-	private FileChannel fileToSend;
+	protected FileChannel fileToSend;
 	private long fileSize = 0;
 
 	public void sendFile(FileChannel file, long size) {
